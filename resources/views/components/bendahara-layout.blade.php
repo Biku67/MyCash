@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{{ config('app.name', 'MyCash') }} — Bendahara</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('assets/favicon.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('assets/logo-mycash.png') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        [x-cloak] { display: none !important; }
+        body { 
+            background: #FDF2DE; 
+            background-image: linear-gradient(to right, rgba(27, 79, 114, 0.07) 1px, transparent 1px), linear-gradient(to bottom, rgba(27, 79, 114, 0.07) 1px, transparent 1px); 
+            background-size: 10px 10px; 
+            font-family: 'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            color: #0F172A; 
+            -webkit-font-smoothing: antialiased; 
+        }
+        .font-heading { font-family: 'Manrope', sans-serif; letter-spacing: -0.02em; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .fill-icon { font-variation-settings: 'FILL' 1; }
+        .sidebar { background: #1B4F72; }
+        .sidebar-link { color: rgba(255,255,255,0.65); transition: all 0.2s; border-radius: 8px; font-size: 14px; }
+        .sidebar-link:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        .sidebar-link.active { color: #fff; background: rgba(93,202,165,0.15); border-left: 3px solid #5DCAA5; font-weight: 600; }
+        .topbar { background: rgba(255,255,255,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid #E2E8F0; }
+        .card { 
+            background-color: #FFFFFF;
+            border-radius: 14px; 
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.03);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card:hover { 
+            border-color: #CBD5E1;
+            box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.05); 
+        }
+        
+        .badge-lunas { background: #ECFDF5; color: #059669; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .badge-menunggak { background: #FFF1F2; color: #E11D48; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .badge-proses { background: #FFFBEB; color: #D97706; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .btn-navy { background: #1B4F72; color: #fff; font-weight: 600; border-radius: 8px; transition: all 0.2s; }
+        .btn-navy:hover { background: #143D59; }
+        .btn-teal-text { color: #5DCAA5; font-weight: 600; transition: all 0.2s; background: transparent; border: none; }
+        .btn-teal-text:hover { color: #4AB592; background: rgba(93,202,165,0.08); border-radius: 8px; }
+        .input-clean { background: #fff; border: 1px solid #E5E7EB; color: #1A1C1E; border-radius: 8px; transition: all 0.2s; }
+        .input-clean:focus { border-color: #5DCAA5; box-shadow: 0 0 0 3px rgba(93,202,165,0.15); outline: none; }
+        .input-clean::placeholder { color: #9CA3AF; }
+        /* ─── Flatpickr Custom Styling matching MyCash Design ─── */
+        .flatpickr-calendar {
+            background: #ffffff !important;
+            border-radius: 16px !important;
+            border: 1px solid rgba(27, 79, 114, 0.12) !important;
+            box-shadow: 0 16px 36px -6px rgba(27, 79, 114, 0.2), 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+            font-family: 'Work Sans', sans-serif !important;
+            padding: 8px !important;
+        }
+        .flatpickr-calendar .flatpickr-months {
+            background: #1B4F72 !important;
+            border-radius: 12px 12px 0 0 !important;
+            padding: 8px 0 !important;
+        }
+        .flatpickr-calendar .flatpickr-current-month {
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            font-size: 105% !important;
+        }
+        .flatpickr-calendar .flatpickr-current-month .cur-month {
+            font-weight: 700 !important;
+            color: #ffffff !important;
+        }
+        .flatpickr-calendar .flatpickr-current-month input.cur-year {
+            font-weight: 700 !important;
+            color: #ffffff !important;
+        }
+        .flatpickr-calendar .flatpickr-prev-month svg, 
+        .flatpickr-calendar .flatpickr-next-month svg {
+            fill: #ffffff !important;
+        }
+        .flatpickr-calendar .flatpickr-prev-month:hover svg, 
+        .flatpickr-calendar .flatpickr-next-month:hover svg {
+            fill: #5DCAA5 !important;
+        }
+        .flatpickr-calendar span.flatpickr-weekday {
+            color: #1B4F72 !important;
+            font-weight: 700 !important;
+            font-size: 85% !important;
+        }
+        .flatpickr-calendar .flatpickr-day {
+            border-radius: 10px !important;
+            font-weight: 500 !important;
+            color: #334155 !important;
+            transition: all 0.15s ease !important;
+        }
+        .flatpickr-calendar .flatpickr-day:hover {
+            background: #F1F5F9 !important;
+            color: #1B4F72 !important;
+        }
+        .flatpickr-calendar .flatpickr-day.today {
+            border-color: #5DCAA5 !important;
+            color: #0d9488 !important;
+            font-weight: 700 !important;
+        }
+        .flatpickr-calendar .flatpickr-day.selected {
+            background: #1B4F72 !important;
+            color: #ffffff !important;
+            border-color: #1B4F72 !important;
+            font-weight: 700 !important;
+            box-shadow: 0 4px 10px rgba(27, 79, 114, 0.25) !important;
+        }
+        .flatpickr-calendar .flatpickr-day.flatpickr-disabled, 
+        .flatpickr-calendar .flatpickr-day.flatpickr-disabled:hover {
+            color: #cbd5e1 !important;
+            cursor: not-allowed !important;
+            opacity: 0.35 !important;
+        }
+        .table-clean th { color: #64748B; font-weight: 700; text-transform: uppercase; font-size: 0.6875rem; letter-spacing: 0.05em; padding: 0.625rem 0.875rem; border-bottom: 1px solid #E2E8F0; text-align: left; background-color: #F8FAFC; white-space: nowrap; }
+        .table-clean td { padding: 0.625rem 0.875rem; border-bottom: 1px solid #F1F5F9; color: #334155; font-size: 0.8125rem; text-align: left; vertical-align: middle; }
+        .table-clean tr:hover td { background-color: #F8FAFC; }
+        /* ─── DataTables Modern Premium & Mobile-First Styling ─── */
+        .dataTables_wrapper {
+            font-family: 'Work Sans', sans-serif;
+            padding: 1rem;
+        }
+
+        @media (min-width: 640px) {
+            .dataTables_wrapper {
+                padding: 1.25rem;
+            }
+        }
+
+        /* Top Controls: Length & Filter */
+        .dataTables_wrapper .dataTables_length {
+            margin-bottom: 0.75rem;
+            color: #64748B;
+            font-size: 0.8125rem;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .dataTables_wrapper .dataTables_length select {
+            border: 1px solid #E2E8F0;
+            border-radius: 0.5rem;
+            padding: 0.35rem 1.75rem 0.35rem 0.65rem;
+            font-size: 0.8125rem;
+            color: #1E293B;
+            background-color: #F8FAFC;
+            transition: all 0.2s;
+            outline: none;
+            cursor: pointer;
+            margin: 0 0.35rem;
+        }
+
+        .dataTables_wrapper .dataTables_length select:focus {
+            border-color: #5DCAA5;
+            background-color: #FFFFFF;
+            box-shadow: 0 0 0 3px rgba(93, 202, 165, 0.2);
+        }
+
+        .dataTables_wrapper .dataTables_filter {
+            margin-bottom: 0.75rem;
+            width: 100%;
+        }
+
+        @media (min-width: 640px) {
+            .dataTables_wrapper .dataTables_filter {
+                width: auto;
+            }
+        }
+
+        .dataTables_wrapper .dataTables_filter label {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            position: relative;
+            font-size: 0; /* Hides raw text 'Cari:' cleanly */
+            color: transparent;
+        }
+
+        .dataTables_wrapper .dataTables_filter label::before {
+            content: 'search';
+            font-family: 'Material Symbols Outlined';
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.125rem;
+            color: #94A3B8;
+            pointer-events: none;
+        }
+
+        .dataTables_wrapper .dataTables_filter input {
+            border: 1px solid #E2E8F0;
+            border-radius: 0.75rem;
+            padding: 0.45rem 0.85rem 0.45rem 2.25rem !important;
+            font-size: 0.8125rem !important;
+            color: #1E293B;
+            width: 100% !important;
+            min-width: 180px;
+            transition: all 0.2s;
+            outline: none;
+            background-color: #F8FAFC;
+            margin-left: 0 !important;
+        }
+
+        @media (min-width: 640px) {
+            .dataTables_wrapper .dataTables_filter input {
+                width: 240px !important;
+            }
+        }
+
+        .dataTables_wrapper .dataTables_filter input:focus {
+            border-color: #5DCAA5;
+            background-color: #FFFFFF;
+            box-shadow: 0 0 0 3px rgba(93, 202, 165, 0.2);
+        }
+
+        /* Modern Table Layout */
+        table.dataTable {
+            border-collapse: collapse !important;
+            width: 100% !important;
+            margin-top: 0.5rem !important;
+            margin-bottom: 0.5rem !important;
+            border-radius: 0.75rem;
+            border: none !important;
+        }
+
+        table.dataTable.no-footer {
+            border-bottom: 1px solid #E2E8F0 !important;
+        }
+
+        table.dataTable thead th {
+            background-color: #F8FAFC !important;
+            border-bottom: 1px solid #E2E8F0 !important;
+            color: #475569 !important;
+            font-weight: 700 !important;
+            font-size: 0.6875rem !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.05em !important;
+            padding: 0.75rem 0.75rem !important;
+            border-top: none !important;
+            white-space: nowrap;
+        }
+
+        @media (min-width: 640px) {
+            table.dataTable thead th {
+                padding: 0.875rem 1rem !important;
+                font-size: 0.75rem !important;
+            }
+        }
+
+        table.dataTable tbody tr {
+            background-color: #FFFFFF !important;
+            transition: background-color 0.15s ease;
+        }
+
+        table.dataTable tbody tr:hover {
+            background-color: #F8FAFC !important;
+        }
+
+        /* Mobile Compact Overrides */
+        @media (max-width: 640px) {
+            .dataTables_wrapper {
+                padding: 0.5rem !important;
+            }
+            .dataTables_wrapper .dataTables_length,
+            .dataTables_wrapper .dataTables_filter {
+                margin-bottom: 0.4rem !important;
+            }
+            .dataTables_wrapper .dataTables_filter input {
+                height: 32px !important;
+                font-size: 0.75rem !important;
+                padding: 0.25rem 0.5rem 0.25rem 1.85rem !important;
+                border-radius: 0.5rem !important;
+            }
+            .dataTables_wrapper .dataTables_filter label::before {
+                font-size: 0.95rem !important;
+                left: 0.55rem !important;
+            }
+            .dataTables_wrapper .dataTables_length {
+                font-size: 0.6875rem !important;
+            }
+            .dataTables_wrapper .dataTables_length select {
+                height: 26px !important;
+                font-size: 0.6875rem !important;
+                padding: 0.15rem 1.25rem 0.15rem 0.35rem !important;
+                border-radius: 0.375rem !important;
+                margin: 0 0.2rem !important;
+            }
+            table.dataTable thead th {
+                padding: 0.4rem 0.35rem !important;
+                font-size: 0.5625rem !important; /* 9px */
+                letter-spacing: 0.02em !important;
+            }
+            table.dataTable tbody td {
+                padding: 0.45rem 0.35rem !important;
+                font-size: 0.6875rem !important; /* 11px */
+                line-height: 1.2 !important;
+            }
+            .badge-lunas, .badge-menunggak, .badge-proses {
+                padding: 1.5px 5px !important;
+                font-size: 9px !important;
+                border-radius: 6px !important;
+            }
+            .dataTables_wrapper .dataTables_info {
+                font-size: 0.625rem !important;
+                padding-top: 0.4rem !important;
+            }
+            .dataTables_wrapper .dataTables_paginate {
+                padding-top: 0.4rem !important;
+                gap: 0.15rem !important;
+            }
+            .dataTables_wrapper .dataTables_paginate .paginate_button {
+                padding: 0.15rem 0.35rem !important;
+                font-size: 0.625rem !important;
+                border-radius: 0.375rem !important;
+            }
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+            color: #FFFFFF !important;
+            background: #1B4F72 !important;
+            border-color: #1B4F72 !important;
+            font-weight: 600 !important;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover,
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:active {
+            color: #CBD5E1 !important;
+            background: #F8FAFC !important;
+            border-color: #F1F5F9 !important;
+            cursor: not-allowed !important;
+        }
+
+        .dataTables_processing {
+            background: rgba(255,255,255,0.95) !important;
+            color: #1B4F72 !important;
+            font-weight: 600;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid #E2E8F0;
+        }
+
+        /* ─── iOS App Folder Animations & Frosted Glass ─── */
+        .ios-folder-overlay {
+            background-color: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(28px) saturate(190%) brightness(0.8);
+            -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(0.8);
+        }
+
+        .ios-folder-card {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(50px) saturate(220%);
+            -webkit-backdrop-filter: blur(50px) saturate(220%);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 30px 80px -15px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.3);
+            border-radius: 40px;
+        }
+
+        @keyframes iosTilePop {
+            0% {
+                opacity: 0;
+                transform: scale(0.55) translateY(18px);
+            }
+            75% {
+                transform: scale(1.05) translateY(-2px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .ios-tile-stagger-1 { animation: iosTilePop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.05s backwards; }
+        .ios-tile-stagger-2 { animation: iosTilePop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.09s backwards; }
+        .ios-tile-stagger-3 { animation: iosTilePop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.13s backwards; }
+        .ios-tile-stagger-4 { animation: iosTilePop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.17s backwards; }
+        .ios-tile-stagger-5 { animation: iosTilePop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.21s backwards; }
+        .ios-tile-stagger-6 { animation: iosTilePop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.25s backwards; }
+
+        .ios-app-icon {
+            box-shadow: 0 10px 22px -4px rgba(0, 0, 0, 0.16), inset 0 1px 1px rgba(255, 255, 255, 0.45);
+            transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.15s ease;
+        }
+        .ios-app-icon:active {
+            transform: scale(0.86);
+            box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Responsive Card Table for Mobile (< 768px) */
+        @media (max-width: 767px) {
+            .table-responsive-cards thead {
+                display: none !important;
+            }
+            .table-responsive-cards,
+            .table-responsive-cards tbody,
+            .table-responsive-cards tr,
+            .table-responsive-cards td {
+                display: block !important;
+                width: 100% !important;
+            }
+            .table-responsive-cards tbody {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 0.75rem !important;
+            }
+            .table-responsive-cards tr {
+                background: #ffffff !important;
+                border: 1px solid #E2E8F0 !important;
+                border-radius: 0.875rem !important;
+                padding: 0.875rem 1rem !important;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+                position: relative !important;
+                transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+            }
+            .table-responsive-cards tr:hover {
+                border-color: #CBD5E1 !important;
+                box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05) !important;
+            }
+            .table-responsive-cards td {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                justify-content: flex-start !important;
+                padding: 0.45rem 0 !important;
+                border: none !important;
+                border-bottom: 1px dashed #F1F5F9 !important;
+                font-size: 0.8125rem !important;
+                min-height: auto !important;
+                white-space: normal !important;
+                text-align: left !important;
+                width: 100% !important;
+            }
+            .table-responsive-cards td > * {
+                width: 100% !important;
+                text-align: left !important;
+            }
+            .table-responsive-cards td:last-child {
+                border-bottom: none !important;
+                padding-top: 0.5rem !important;
+                padding-bottom: 0 !important;
+            }
+            .table-responsive-cards td:last-child > * {
+                display: flex !important;
+                justify-content: flex-start !important;
+                gap: 0.5rem !important;
+            }
+            .table-responsive-cards td::before {
+                content: attr(data-label);
+                font-size: 0.625rem !important;
+                font-weight: 700 !important;
+                color: #94A3B8 !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.05em !important;
+                text-align: left !important;
+                margin-bottom: 0.2rem !important;
+                margin-right: 0 !important;
+                display: block !important;
+                width: 100% !important;
+            }
+            .table-responsive-cards td[data-label="No"] {
+                display: none !important;
+            }
+            .table-responsive-cards td[colspan] {
+                display: block !important;
+                text-align: center !important;
+                justify-content: center !important;
+                border-bottom: none !important;
+                padding: 1.5rem 0 !important;
+            }
+            .table-responsive-cards td[colspan]::before {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body x-data="{ fluidMenuOpen: false }" class="min-h-screen">
+
+    <!-- Desktop Sidebar (Hidden on Mobile) -->
+    <aside class="sidebar hidden lg:flex fixed top-0 left-0 z-30 w-[220px] h-full flex-col">
+        <!-- Logo -->
+        <div class="p-5 flex items-center justify-between">
+            <a href="{{ route('bendahara.dashboard') }}" class="flex items-center gap-3">
+                <img src="{{ asset('assets/logo-mycash.png') }}" alt="Logo MyCash" class="w-10 h-10 object-contain">
+                <span class="text-lg font-bold text-white font-heading tracking-tight">MyCash</span>
+            </a>
+        </div>
+
+        <div class="px-5 mb-5">
+            <span class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-teal-accent bg-teal-accent/15 rounded-full">Bendahara</span>
+            <p class="text-xs text-white/50 mt-2 px-1 truncate">{{ Auth::user()->school_name ?? 'Sekolah' }}</p>
+        </div>
+
+        <nav class="flex-1 px-3 space-y-1 overflow-y-auto">
+            <a href="{{ route('bendahara.dashboard') }}" class="sidebar-link flex items-center gap-3 px-4 py-2.5 {{ request()->routeIs('bendahara.dashboard') ? 'active' : '' }}">
+                <span class="material-symbols-outlined text-xl {{ request()->routeIs('bendahara.dashboard') ? 'fill-icon' : '' }}">dashboard</span>
+                Dashboard
+            </a>
+            <a href="{{ route('bendahara.transactions.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-2.5 {{ request()->routeIs('bendahara.transactions.index') || request()->routeIs('bendahara.transactions.create') || request()->routeIs('bendahara.transactions.edit') ? 'active' : '' }}">
+                <span class="material-symbols-outlined text-xl {{ request()->routeIs('bendahara.transactions.index') || request()->routeIs('bendahara.transactions.create') || request()->routeIs('bendahara.transactions.edit') ? 'fill-icon' : '' }}">receipt_long</span>
+                Transaksi Kas
+            </a>
+            <a href="{{ route('bendahara.students.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-2.5 {{ request()->routeIs('bendahara.students.*') ? 'active' : '' }}">
+                <span class="material-symbols-outlined text-xl {{ request()->routeIs('bendahara.students.*') ? 'fill-icon' : '' }}">checklist</span>
+                Checklist Kas
+            </a>
+            <a href="{{ route('bendahara.report.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-2.5 {{ request()->routeIs('bendahara.report.*') ? 'active' : '' }}">
+                <span class="material-symbols-outlined text-xl {{ request()->routeIs('bendahara.report.*') ? 'fill-icon' : '' }}">assessment</span>
+                Laporan
+            </a>
+            <a href="{{ route('bendahara.announcements.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-2.5 {{ request()->routeIs('bendahara.announcements.*') ? 'active' : '' }}">
+                <span class="material-symbols-outlined text-xl {{ request()->routeIs('bendahara.announcements.*') ? 'fill-icon' : '' }}">campaign</span>
+                Pengumuman
+            </a>
+            <a href="{{ route('profile.edit') }}" class="sidebar-link flex items-center gap-3 px-4 py-2.5 {{ request()->routeIs('profile.*') ? 'active' : '' }}">
+                <span class="material-symbols-outlined text-xl {{ request()->routeIs('profile.*') ? 'fill-icon' : '' }}">person</span>
+                Profil
+            </a>
+        </nav>
+
+        <!-- User -->
+        <div class="p-4 border-t border-white/10">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-9 h-9 rounded-full bg-teal-accent/20 flex items-center justify-center">
+                    <span class="text-sm font-bold text-teal-accent">{{ substr(Auth::user()->name, 0, 1) }}</span>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm font-medium text-white truncate">{{ Auth::user()->name }}</p>
+                    <p class="text-xs text-white/40 truncate">{{ Auth::user()->email }}</p>
+                </div>
+            </div>
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="w-full flex items-center gap-2 px-4 py-2 text-sm text-white/50 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors">
+                    <span class="material-symbols-outlined text-lg">logout</span>
+                    Logout
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <div class="lg:ml-[220px]">
+        <header class="topbar sticky top-0 z-30 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+            <!-- Mobile Brand Logo (Kiri Atas) -->
+            <a href="{{ route('bendahara.dashboard') }}" class="flex items-center gap-2.5 lg:hidden">
+                <img src="{{ asset('assets/logo-mycash.png') }}" alt="Logo MyCash" class="w-8 h-8 object-contain">
+                <span class="text-base sm:text-lg font-bold text-navy font-heading tracking-tight">MyCash</span>
+            </a>
+
+            <!-- Desktop Page Title -->
+            <div class="hidden lg:block">
+                <h2 class="text-lg font-bold text-navy" style="font-family:'Manrope',sans-serif;">@yield('page-title', 'Dashboard Bendahara')</h2>
+            </div>
+
+            <!-- Topbar Right Items (User Name on Mobile; Date + User Name + Logout on Desktop) -->
+            <div class="flex items-center gap-2.5 sm:gap-3">
+                <span class="text-xs text-gray-400 hidden lg:block">{{ now()->format('d M Y') }}</span>
+                <span class="text-xs font-semibold px-2.5 py-1 bg-navy/10 text-navy rounded-full truncate max-w-[150px] sm:max-w-none">{{ Auth::user()->name }}</span>
+                <button type="button" onclick="window.dispatchEvent(new CustomEvent('start-tour'))" class="p-1.5 text-gray-400 hover:text-navy hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center" title="Panduan Alur MyCash">
+                    <span class="material-symbols-outlined text-xl">help</span>
+                </button>
+                <a href="{{ route('logout.get') }}" class="hidden lg:inline-flex p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Logout">
+                    <span class="material-symbols-outlined text-xl">logout</span>
+                </a>
+            </div>
+        </header>
+        <main class="p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
+            {{ $slot }}
+        </main>
+    </div>
+
+    <!-- ─── FLUID BACKDROP OVERLAY ─── -->
+    <div x-show="fluidMenuOpen"
+         x-transition:enter="transition-all duration-300 ease-out"
+         x-transition:enter-start="opacity-0 backdrop-blur-none"
+         x-transition:enter-end="opacity-100 backdrop-blur-sm"
+         x-transition:leave="transition-all duration-200 ease-in"
+         x-transition:leave-start="opacity-100 backdrop-blur-sm"
+         x-transition:leave-end="opacity-0 backdrop-blur-none"
+         @click="fluidMenuOpen = false"
+         class="fixed inset-0 z-40 bg-black/25 lg:hidden"
+         style="display:none;"></div>
+
+    <!-- ─── FLOATING CIRCULAR ACTION BUTTONS (Tanpa Dock) ─── -->
+    <div x-show="fluidMenuOpen"
+         x-transition:enter="transition-all duration-350 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+         x-transition:enter-start="opacity-0 scale-50 translate-y-10"
+         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+         x-transition:leave="transition-all duration-200 ease-[cubic-bezier(0.4,0,1,1)]"
+         x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+         x-transition:leave-end="opacity-0 scale-50 translate-y-10"
+         class="fixed bottom-[72px] right-4 z-50 flex flex-col items-center gap-3 lg:hidden"
+         style="display:none;">
+        
+        <!-- 1. Laporan Kas -->
+        <a href="{{ route('bendahara.report.index') }}" @click="fluidMenuOpen = false"
+           class="w-12 h-12 rounded-full bg-white text-gray-400 hover:text-navy shadow-[0_8px_20px_rgba(0,0,0,0.12)] border border-gray-100/80 flex items-center justify-center active:scale-85 hover:scale-105 transition-all"
+           title="Laporan Kas">
+            <span class="material-symbols-outlined text-2xl">assessment</span>
+        </a>
+
+        <!-- 2. Kirim Pengumuman -->
+        <a href="{{ route('bendahara.announcements.create') }}" @click="fluidMenuOpen = false"
+           class="w-12 h-12 rounded-full bg-white text-gray-400 hover:text-navy border border-gray-100/80 flex items-center justify-center active:scale-85 hover:scale-105 transition-all"
+           title="Kirim Pengumuman">
+            <span class="material-symbols-outlined text-2xl">campaign</span>
+        </a>
+
+        <!-- 3. Profil Akun -->
+        <a href="{{ route('profile.edit') }}" @click="fluidMenuOpen = false"
+           class="w-12 h-12 rounded-full bg-white text-gray-400 hover:text-navy border border-gray-100/80 flex items-center justify-center active:scale-85 hover:scale-105 transition-all"
+           title="Profil Akun">
+            <span class="material-symbols-outlined text-2xl">person</span>
+        </a>
+
+        <!-- 4. Logout -->
+        <form method="POST" action="{{ route('logout') }}" class="m-0 p-0">
+            @csrf
+            <button type="submit"
+                    class="w-12 h-12 rounded-full bg-white border border-gray-100/80 flex items-center justify-center active:scale-85 hover:scale-105 transition-all focus:outline-none"
+                    title="Keluar (Logout)">
+                <span class="material-symbols-outlined text-2xl text-gray-400 hover:text-rose-500">logout</span>
+            </button>
+        </form>
+
+    </div>
+
+    <!-- ─── MOBILE BOTTOM NAVIGATION BAR ─── -->
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-gray-200/90 py-1.5 px-3 flex items-center justify-around lg:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+        
+        <!-- 1. Dasbor Tab -->
+        <a href="{{ route('bendahara.dashboard') }}"
+           class="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all {{ request()->routeIs('bendahara.dashboard') ? 'text-navy font-bold' : 'text-gray-400 hover:text-gray-600' }}">
+            <span class="material-symbols-outlined text-2xl {{ request()->routeIs('bendahara.dashboard') ? 'fill-icon text-navy' : '' }}">dashboard</span>
+            <span class="text-[10px] tracking-tight">Dasbor</span>
+        </a>
+        
+        <!-- 2. Transaksi Kas Tab -->
+        <a href="{{ route('bendahara.transactions.index') }}"
+           class="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all {{ request()->routeIs('bendahara.transactions.index') || request()->routeIs('bendahara.transactions.create') || request()->routeIs('bendahara.transactions.edit') ? 'text-navy font-bold' : 'text-gray-400 hover:text-gray-600' }}">
+            <span class="material-symbols-outlined text-2xl {{ request()->routeIs('bendahara.transactions.index') || request()->routeIs('bendahara.transactions.create') || request()->routeIs('bendahara.transactions.edit') ? 'fill-icon text-navy' : '' }}">receipt_long</span>
+            <span class="text-[10px] tracking-tight">Transaksi</span>
+        </a>
+
+        <!-- 3. Catat Transaksi Cepat (+ Floating Circle) -->
+        <a href="{{ route('bendahara.transactions.create') }}" class="flex flex-col items-center justify-center -mt-5 group">
+            <div class="w-11 h-11 rounded-full bg-navy text-white flex items-center justify-center shadow-lg shadow-navy/30 group-active:scale-95 transition-transform border-2 border-white">
+                <span class="material-symbols-outlined text-2xl">add</span>
+            </div>
+            <span class="text-[10px] tracking-tight font-medium text-navy">Catat</span>
+        </a>
+
+        <!-- 4. Checklist Kas Tab -->
+        <a href="{{ route('bendahara.students.index') }}"
+           class="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all {{ request()->routeIs('bendahara.students.*') ? 'text-navy font-bold' : 'text-gray-400 hover:text-gray-600' }}">
+            <span class="material-symbols-outlined text-2xl {{ request()->routeIs('bendahara.students.*') ? 'fill-icon text-navy' : '' }}">checklist</span>
+            <span class="text-[10px] tracking-tight">Checklist</span>
+        </a>
+
+        <!-- 5. FLUID MENU TRIGGER (Icon Transition: Menu <-> X) -->
+        <button @click="fluidMenuOpen = !fluidMenuOpen"
+                class="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all focus:outline-none group active:scale-90"
+                :class="fluidMenuOpen ? 'text-navy font-bold' : 'text-gray-400 hover:text-gray-600'">
+            
+            <!-- Fluid Morphing Icon (Menu Icon rotates & scales to 0, X rotates into view) -->
+            <div class="relative w-6 h-6 flex items-center justify-center">
+                <!-- Menu Icon (Visible when closed) -->
+                <div class="absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out origin-center"
+                     :class="fluidMenuOpen ? 'opacity-0 scale-0 rotate-180' : 'opacity-100 scale-100 rotate-0'">
+                    <span class="material-symbols-outlined text-2xl">menu</span>
+                </div>
+                <!-- X Close Icon (Visible when open) -->
+                <div class="absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out origin-center text-rose-500"
+                     :class="fluidMenuOpen ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-0 -rotate-180'">
+                    <span class="material-symbols-outlined text-2xl">close</span>
+                </div>
+            </div>
+            
+            <span class="text-[10px] tracking-tight" :class="fluidMenuOpen ? 'text-rose-500 font-semibold' : ''" x-text="fluidMenuOpen ? 'Tutup' : 'Lainnya'">Menu</span>
+        </button>
+
+    </nav>
+
+    {{-- SweetAlert2 Flash Messages --}}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const Toast = Swal.mixin({
+            toast: true, position: 'top-end', showConfirmButton: false,
+            timer: 3500, timerProgressBar: true, showCloseButton: true,
+            didOpen: (toast) => { toast.onmouseenter = Swal.stopTimer; toast.onmouseleave = Swal.resumeTimer; },
+            customClass: { popup: 'swal-toast-custom' }
+        });
+        @if(session('success'))
+            Toast.fire({ icon: 'success', title: '{{ session('success') }}' });
+        @endif
+        @if(session('error'))
+            Toast.fire({ icon: 'error', title: '{{ session('error') }}' });
+        @endif
+    });
+
+    /**
+     * Global SweetAlert2 confirm dialog for destructive actions.
+     * Usage: <form onsubmit="return swalConfirm(event, 'Hapus data ini?')">
+     */
+    function swalConfirm(event, message, detail) {
+        event.preventDefault();
+        Swal.fire({
+            title: message || 'Apakah Anda yakin?',
+            text: detail || 'Tindakan ini tidak dapat dibatalkan.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#1B4F72',
+            cancelButtonColor: '#6B7280',
+            confirmButtonText: 'Ya, lanjutkan',
+            cancelButtonText: 'Batal',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) event.target.submit();
+        });
+        return false;
+    }
+
+    /**
+     * SweetAlert2 confirm for payment/positive actions.
+     */
+    function swalConfirmPay(event, message, detail) {
+        event.preventDefault();
+        Swal.fire({
+            title: message || 'Konfirmasi Pembayaran',
+            text: detail || 'Pastikan data pembayaran sudah benar.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#059669',
+            cancelButtonColor: '#6B7280',
+            confirmButtonText: 'Ya, bayar',
+            cancelButtonText: 'Batal',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) event.target.submit();
+        });
+        return false;
+    }
+    </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof flatpickr !== 'undefined') {
+            flatpickr.localize(flatpickr.l10ns.id);
+
+            // Form Transaksi: Format lengkap dengan nama hari (contoh: Senin, 21 September 2026)
+            document.querySelectorAll('.datepicker-tx').forEach(function(el) {
+                flatpickr(el, {
+                    locale: 'id',
+                    altInput: true,
+                    altFormat: 'l, j F Y',
+                    dateFormat: 'Y-m-d',
+                    maxDate: el.getAttribute('max') || 'today',
+                    disableMobile: true,
+                    altInputClass: el.className.replace('datepicker-tx', '').trim() + ' cursor-pointer'
+                });
+            });
+
+            // Laporan & Filter: Format tanggal bulan teks (contoh: 21 September 2026)
+            document.querySelectorAll('.datepicker-report').forEach(function(el) {
+                flatpickr(el, {
+                    locale: 'id',
+                    altInput: true,
+                    altFormat: 'j F Y',
+                    dateFormat: 'Y-m-d',
+                    maxDate: el.getAttribute('max') || 'today',
+                    disableMobile: true,
+                    altInputClass: el.className.replace('datepicker-report', '').trim() + ' cursor-pointer'
+                });
+            });
+        }
+    });
+    </script>
+    <x-onboarding-tour />
+    @stack('scripts')
+</body>
+</html>

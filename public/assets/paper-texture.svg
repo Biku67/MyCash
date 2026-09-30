@@ -1,0 +1,13 @@
+<svg width="800" height="800" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="paper-texture-filter" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.025" numOctaves="5" seed="1" result="noise"/>
+      <feDiffuseLighting in="noise" lighting-color="#ffffff" surfaceScale="2.8" result="diffuse">
+        <feDistantLight azimuth="45" elevation="45"/>
+      </feDiffuseLighting>
+      <feBlend mode="multiply" in="SourceGraphic" in2="diffuse" result="blend"/>
+    </filter>
+  </defs>
+  <rect width="100%" height="100%" fill="#FBF7EB"/>
+  <rect width="100%" height="100%" fill="#F8F3E2" filter="url(#paper-texture-filter)"/>
+</svg>

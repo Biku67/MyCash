@@ -1,0 +1,241 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+[x-cloak] {
+  display: none !important;
+}
+
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
+@layer components {
+  .table-clean {
+    @apply w-full text-left border-collapse;
+  }
+  .table-clean thead tr {
+    @apply border-b border-gray-200;
+  }
+  .table-clean thead th {
+    @apply py-3 px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider bg-transparent;
+  }
+  .table-clean tbody {
+    @apply divide-y divide-gray-100;
+  }
+  .table-clean tbody tr {
+    @apply hover:bg-gray-50 transition-colors duration-150;
+  }
+  .table-clean tbody td {
+    @apply py-3 px-4 text-sm whitespace-nowrap text-gray-800 font-medium;
+  }
+
+  /* Responsive Card Table for Mobile (< 768px) */
+  @media (max-width: 767px) {
+    .table-responsive-cards thead {
+      display: none !important;
+    }
+    .table-responsive-cards,
+    .table-responsive-cards tbody,
+    .table-responsive-cards tr,
+    .table-responsive-cards td {
+      display: block !important;
+      width: 100% !important;
+    }
+    .table-responsive-cards tbody {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 0.75rem !important;
+    }
+    .table-responsive-cards tr {
+      background: #ffffff !important;
+      border: 1px solid #E2E8F0 !important;
+      border-radius: 0.875rem !important;
+      padding: 0.875rem 1rem !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+      position: relative !important;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+    }
+    .table-responsive-cards tr:hover {
+      border-color: #CBD5E1 !important;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05) !important;
+    }
+    .table-responsive-cards td {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+      padding: 0.45rem 0 !important;
+      border: none !important;
+      border-bottom: 1px dashed #F1F5F9 !important;
+      font-size: 0.8125rem !important;
+      min-height: auto !important;
+      white-space: normal !important;
+      text-align: left !important;
+      width: 100% !important;
+    }
+    .table-responsive-cards td > * {
+      width: 100% !important;
+      text-align: left !important;
+    }
+    .table-responsive-cards td:last-child {
+      border-bottom: none !important;
+      padding-top: 0.5rem !important;
+      padding-bottom: 0 !important;
+    }
+    .table-responsive-cards td:last-child > * {
+      display: flex !important;
+      justify-content: flex-start !important;
+      gap: 0.5rem !important;
+    }
+    .table-responsive-cards td::before {
+      content: attr(data-label);
+      font-size: 0.625rem !important;
+      font-weight: 700 !important;
+      color: #94A3B8 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.05em !important;
+      text-align: left !important;
+      margin-bottom: 0.2rem !important;
+      margin-right: 0 !important;
+      display: block !important;
+      width: 100% !important;
+    }
+    .table-responsive-cards td[data-label="No"] {
+      display: none !important;
+    }
+    .table-responsive-cards td[colspan] {
+      display: block !important;
+      text-align: center !important;
+      justify-content: center !important;
+      border-bottom: none !important;
+      padding: 1.5rem 0 !important;
+    }
+    .table-responsive-cards td[colspan]::before {
+      display: none !important;
+    }
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   AWWWARDS KINETIC VOID DESIGN SYSTEM TOKENS & UTILITIES
+   ───────────────────────────────────────────────────────────────────────────── */
+:root {
+  --color-obsidian: #030712;
+  --color-surface-card: #0A101C;
+  --color-teal-glow: #5DCAA5;
+  --color-teal-dim: rgba(93, 202, 165, 0.15);
+  --color-border-subtle: rgba(255, 255, 255, 0.08);
+}
+
+/* Anti-aliasing and font features */
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* Subtle minimalist custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.6);
+}
+
+/* Refined Glassmorphism with 1px inner refraction border */
+.glass-panel {
+  background: rgba(10, 16, 28, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 24px 48px -12px rgba(0, 0, 0, 0.6);
+}
+
+.glass-panel-subtle {
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* High-tech telemetry mono typography */
+.font-telemetry {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Scrubber Slider */
+input[type=range].scrubber-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+input[type=range].scrubber-slider:focus {
+  outline: none;
+}
+input[type=range].scrubber-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  transition: background 0.2s ease;
+}
+input[type=range].scrubber-slider:hover::-webkit-slider-runnable-track {
+  background: rgba(255, 255, 255, 0.25);
+}
+input[type=range].scrubber-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #5DCAA5;
+  border: 2px solid #030712;
+  margin-top: -5px;
+  box-shadow: 0 0 12px rgba(93, 202, 165, 0.85);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+input[type=range].scrubber-slider::-webkit-slider-thumb:hover,
+input[type=range].scrubber-slider:active::-webkit-slider-thumb {
+  transform: scale(1.3);
+  background: #ffffff;
+}
+
+/* Subtle Grid Void Texture */
+.bg-void-grid {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Subtle Kinetic Grain (fixed, pointer-events none per performance guardrails) */
+.grain-overlay {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.035'/%3E%3C/svg%3E");
+}
+
+
