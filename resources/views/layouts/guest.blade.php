@@ -16,6 +16,7 @@
         <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 
         <!-- Scripts -->
+        <script src="{{ asset('vendor/jquery/jquery-3.7.1.min.js') }}"></script>
         <script src="{{ asset('vendor/sweetalert2/sweetalert2.all.min.js') }}"></script>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>

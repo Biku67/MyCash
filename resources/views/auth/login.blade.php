@@ -10,6 +10,7 @@
     <link rel="apple-touch-icon" href="{{ asset('assets/logo-mycash.png') }}">
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script src="{{ asset('vendor/jquery/jquery-3.7.1.min.js') }}"></script>
     <script src="{{ asset('vendor/sweetalert2/sweetalert2.all.min.js') }}"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
@@ -82,22 +83,22 @@
                         @error('login')<p class="mt-1.5 text-xs text-rose-500">{{ $message }}</p>@enderror
                     </div>
 
-                    <div x-data="{ showPassword: false }">
+                    <div>
                         <div class="flex items-center justify-between mb-1.5">
                             <label for="password" class="block text-xs font-semibold text-slate-700">Password</label>
-                            <button type="button" onclick="showForgotPasswordPopup()" class="text-xs font-semibold text-[#1B4F72] hover:underline focus:outline-none transition-colors">
+                            <button type="button" onclick="showForgotPasswordPopup()" class="text-xs font-semibold text-[#1B4F72] hover:underline focus:outline-none transition-colors cursor-pointer">
                                 Lupa password?
                             </button>
                         </div>
                         <div class="relative">
                             <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-lg pointer-events-none">lock</span>
-                            <input id="password" :type="showPassword ? 'text' : 'password'" type="password" name="password" required autocomplete="current-password"
+                            <input id="password" type="password" name="password" required autocomplete="current-password"
                                 class="w-full pl-10 pr-11 py-2.5 sm:py-3 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:border-[#1B4F72] focus:ring-1 focus:ring-[#1B4F72] outline-none transition-all shadow-sm"
                                 placeholder="••••••••">
-                            <button type="button" @click="showPassword = !showPassword"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 focus:outline-none flex items-center justify-center p-1 rounded-lg hover:bg-slate-100 transition-colors"
+                            <button type="button" onclick="togglePasswordVisibility()" id="btnTogglePassword"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 focus:outline-none flex items-center justify-center p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
                                 aria-label="Tampilkan atau sembunyikan password">
-                                <span class="material-symbols-outlined text-lg" x-text="showPassword ? 'visibility_off' : 'visibility'">visibility</span>
+                                <span id="passwordToggleIcon" class="material-symbols-outlined text-lg select-none">visibility</span>
                             </button>
                         </div>
                         @error('password')<p class="mt-1.5 text-xs text-rose-500">{{ $message }}</p>@enderror
@@ -136,6 +137,20 @@
     </div>
 
     <script>
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('passwordToggleIcon');
+            if (!passwordInput) return;
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                if (toggleIcon) toggleIcon.textContent = 'visibility_off';
+            } else {
+                passwordInput.type = 'password';
+                if (toggleIcon) toggleIcon.textContent = 'visibility';
+            }
+        }
+
         function showForgotPasswordPopup() {
             Swal.fire({
                 title: 'Lupa Kata Sandi?',

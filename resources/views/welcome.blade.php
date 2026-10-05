@@ -112,6 +112,7 @@
     ], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) !!}
     </script>
 
+    <script src="{{ asset('vendor/jquery/jquery-3.7.1.min.js') }}"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/landing.js'])
 
     <style>
