@@ -49,7 +49,7 @@ class TransactionController extends Controller
                     } elseif ($tx->jenis_transaksi === 'pemasukan') {
                         return '<span class="px-2.5 py-1 text-xs font-medium rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200/60 inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>' . e($categoryName) . '</span>';
                     } else {
-                        return '<span class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 text-slate-700 border border-slate-200/60 inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>' . e($categoryName) . '</span>';
+                        return '<span class="px-2.5 py-1 text-xs font-medium rounded-lg bg-red-50 text-red-700 border border-red-200/60 inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>' . e($categoryName) . '</span>';
                     }
                 })
                 ->addColumn('keterangan_display', function ($tx) {
