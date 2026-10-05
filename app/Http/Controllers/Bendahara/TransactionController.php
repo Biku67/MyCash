@@ -152,8 +152,6 @@ class TransactionController extends Controller
     {
         $bendahara = auth()->user()->bendahara;
         $students = Siswa::where('kode_kelas', $bendahara->kode_kelas)->orderBy('nama', 'asc')->get();
-        $tahunAjaranList = Kelas::getTahunAjaranOptions();
-        $activeTahunAjaran = $bendahara->kelas->tahun_ajaran ?? '2025/2026';
         
         $incomeCategories = Kategori::where('tipe', 'pemasukan')->pluck('nama_kategori')->values();
         if ($incomeCategories->isEmpty()) {
@@ -165,7 +163,7 @@ class TransactionController extends Controller
             $expenseCategories = collect(['Pembelian ATK', 'Kegiatan Kelas', 'Operasional Kelas', 'Lainnya (Pengeluaran)']);
         }
 
-        return view('bendahara.transactions.create', compact('students', 'incomeCategories', 'expenseCategories', 'tahunAjaranList', 'activeTahunAjaran'));
+        return view('bendahara.transactions.create', compact('students', 'incomeCategories', 'expenseCategories'));
     }
 
     public function store(Request $request)
@@ -177,7 +175,6 @@ class TransactionController extends Controller
             'transaction_date' => 'required|date|before_or_equal:today',
             'category' => 'required|string',
             'student_id' => 'required_if:category,Uang Kas|nullable|exists:siswa,id',
-            'tahun_ajaran' => 'nullable|string|max:15',
         ], [
             'transaction_date.before_or_equal' => 'Tanggal transaksi tidak boleh melebihi hari ini.',
         ]);
@@ -188,8 +185,6 @@ class TransactionController extends Controller
             $studentId = $validated['student_id'] ?? null;
             $description = $validated['description'];
             $jenisTransaksi = $validated['type'] === 'income' ? 'pemasukan' : 'pengeluaran';
-            $targetTahunAjaran = $validated['tahun_ajaran'] ?? ($kelas->tahun_ajaran ?? '2025/2026');
-
             $kategori = Kategori::where('nama_kategori', $validated['category'])->first();
             if (!$kategori) {
                 $kategori = Kategori::create([
@@ -204,7 +199,6 @@ class TransactionController extends Controller
                 'id_bendahara' => $bendahara->id,
                 'id_kategori' => $kategori->id,
                 'jenis_transaksi' => $jenisTransaksi,
-                'tahun_ajaran' => $targetTahunAjaran,
                 'total_nominal' => $validated['amount'],
                 'tanggal_transaksi' => $validated['transaction_date'],
                 'keterangan' => $description,
@@ -212,7 +206,7 @@ class TransactionController extends Controller
 
             // Auto-checklist / allocation logic if Category is Uang Kas
             if ($validated['type'] === 'income' && $validated['category'] === 'Uang Kas' && $studentId) {
-                $this->allocateKasPayment($transaction, $studentId, $validated['amount'], $kelas, $targetTahunAjaran);
+                $this->allocateKasPayment($transaction, $studentId, $validated['amount'], $kelas);
             }
 
             // Create Log for creation
@@ -319,7 +313,7 @@ class TransactionController extends Controller
             // Reallocate kas payment if applicable
             $studentId = $validated['student_id'] ?? null;
             if ($validated['type'] === 'income' && $validated['category'] === 'Uang Kas' && $studentId) {
-                $this->allocateKasPayment($transaction, $studentId, $validated['amount'], $kelas, $transaction->tahun_ajaran, false);
+                $this->allocateKasPayment($transaction, $studentId, $validated['amount'], $kelas, false);
             }
 
             $newData = [
@@ -423,7 +417,8 @@ class TransactionController extends Controller
                     $query->orderBy('created_at', $order)->orderBy('id', 'desc');
                 })
                 ->editColumn('created_at', function ($log) {
-                    return '<span class="text-xs font-medium text-gray-700">' . $log->created_at->format('d M Y') . '</span><br><span class="text-[11px] text-gray-400 font-mono">' . $log->created_at->format('H:i') . ' WIB</span>';
+                    $dt = $log->created_at ? $log->created_at->setTimezone('Asia/Jakarta') : now();
+                    return '<span class="text-xs font-medium text-gray-700">' . $dt->translatedFormat('d M Y') . '</span><br><span class="text-[11px] text-gray-400 font-mono">' . $dt->format('H:i') . ' WIB</span>';
                 })
                 ->addColumn('user_name', function ($log) {
                     return '<span class="text-xs font-semibold text-navy">' . e($log->user->name ?? 'Pengguna Dihapus') . '</span>';
@@ -542,41 +537,29 @@ class TransactionController extends Controller
     /**
      * Helper for allocating fee amounts across unpaid/partially-paid periods.
      */
-    private function allocateKasPayment($transaction, $studentId, $amount, $kelas, ?string $targetTahunAjaran = null, bool $sendNotification = true)
+    private function allocateKasPayment($transaction, $studentId, $amount, $kelas, bool $sendNotification = true)
     {
-        $targetTahunAjaran = $targetTahunAjaran ?: ($transaction->tahun_ajaran ?: ($kelas->tahun_ajaran ?? '2025/2026'));
         $student = Siswa::where('id', $studentId)
             ->where('kode_kelas', $kelas->kode_kelas)
             ->firstOrFail();
 
         $nominalStandar = (float)($kelas->nominal_standar ?? 20000);
-        $periods = $kelas ? $kelas->getPeriods($targetTahunAjaran) : [];
+        $periods = $kelas ? $kelas->getPeriods() : [];
 
         $remainingToAllocate = (float)$amount;
         $completedPeriods = [];
         $partiallyPaidPeriods = [];
 
-        foreach ($periods as $periodItem) {
+        foreach ($periods as $period) {
             if ($remainingToAllocate <= 0) {
                 break;
             }
 
-            $periodKey = $periodItem['key'];
-            $periodLabel = $periodItem['label'];
-
             // Check current sum already paid for this period (excluding this transaction)
             $alreadyPaid = (float)DetailTransaksiKas::where('id_siswa', $student->id)
-                ->where(function ($q) use ($periodKey, $periodItem, $targetTahunAjaran) {
-                    $q->where(function ($sq) use ($periodKey, $targetTahunAjaran) {
-                        $sq->where('periode', $periodKey)
-                           ->where(function ($taQ) use ($targetTahunAjaran) {
-                               $taQ->where('tahun_ajaran', $targetTahunAjaran)
-                                   ->orWhereNull('tahun_ajaran');
-                           });
-                    })->orWhere(function ($sq) use ($periodItem) {
-                        $sq->where('periode', $periodItem['month'])
-                           ->whereYear('created_at', $periodItem['year']);
-                    });
+                ->where('periode', $period)
+                ->when($kelas->last_reset_at, function ($q) use ($kelas) {
+                    $q->where('created_at', '>', $kelas->last_reset_at);
                 })
                 ->where('id_transaksi_kas', '!=', $transaction->id)
                 ->sum('nominal');
@@ -594,29 +577,26 @@ class TransactionController extends Controller
             DetailTransaksiKas::create([
                 'id_transaksi_kas' => $transaction->id,
                 'id_siswa'         => $student->id,
-                'periode'          => $periodKey,
-                'tahun_ajaran'     => $targetTahunAjaran,
+                'periode'          => $period,
                 'nominal'          => $allocation,
             ]);
 
             $remainingToAllocate -= $allocation;
 
             if (($alreadyPaid + $allocation) >= $nominalStandar) {
-                $completedPeriods[] = $periodLabel;
+                $completedPeriods[] = $period;
             } else {
-                $partiallyPaidPeriods[$periodLabel] = ($alreadyPaid + $allocation);
+                $partiallyPaidPeriods[$period] = ($alreadyPaid + $allocation);
             }
         }
 
         // If there's still an amount remaining after all standard periods
         if ($remainingToAllocate > 0) {
-            $lastPeriodItem = end($periods);
-            $lastPeriodKey = $lastPeriodItem ? $lastPeriodItem['key'] : null;
+            $lastPeriod = end($periods);
             DetailTransaksiKas::create([
                 'id_transaksi_kas' => $transaction->id,
                 'id_siswa'         => $student->id,
-                'periode'          => $lastPeriodKey,
-                'tahun_ajaran'     => $targetTahunAjaran,
+                'periode'          => $lastPeriod ?: null,
                 'nominal'          => $remainingToAllocate,
             ]);
         }

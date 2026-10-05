@@ -10,6 +10,7 @@
     <link rel="apple-touch-icon" href="{{ asset('assets/logo-mycash.png') }}">
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script src="{{ asset('vendor/sweetalert2/sweetalert2.all.min.js') }}"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         body { font-family: 'Work Sans', sans-serif; }
@@ -84,9 +85,9 @@
                     <div x-data="{ showPassword: false }">
                         <div class="flex items-center justify-between mb-1.5">
                             <label for="password" class="block text-xs font-semibold text-slate-700">Password</label>
-                            @if (Route::has('password.request'))
-                                <a class="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors" href="{{ route('password.request') }}">Lupa password?</a>
-                            @endif
+                            <button type="button" onclick="showForgotPasswordPopup()" class="text-xs font-semibold text-[#1B4F72] hover:underline focus:outline-none transition-colors">
+                                Lupa password?
+                            </button>
                         </div>
                         <div class="relative">
                             <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-lg pointer-events-none">lock</span>
@@ -133,5 +134,32 @@
             </div>
         </footer>
     </div>
+
+    <script>
+        function showForgotPasswordPopup() {
+            Swal.fire({
+                title: 'Lupa Kata Sandi?',
+                html: `
+                    <div class="text-center py-2">
+                        <div class="w-16 h-16 mx-auto mb-3.5 rounded-2xl bg-teal-50 text-[#1B4F72] flex items-center justify-center border border-teal-100 shadow-sm">
+                            <span class="material-symbols-outlined text-4xl">supervisor_account</span>
+                        </div>
+                        <h4 class="text-slate-900 text-base font-bold mb-2">
+                            Hubungi Wali Kelas
+                        </h4>
+                        <p class="text-slate-600 text-xs sm:text-sm leading-relaxed max-w-xs mx-auto">
+                            Untuk mengatur ulang kata sandi akun MyCash Anda, silakan hubungi <strong>Wali Kelas</strong> masing-masing agar dapat di-reset melalui sistem.
+                        </p>
+                    </div>
+                `,
+                confirmButtonText: 'Saya Mengerti',
+                confirmButtonColor: '#1B4F72',
+                customClass: {
+                    popup: 'rounded-2xl p-6 shadow-2xl border border-slate-100',
+                    confirmButton: 'rounded-xl px-6 py-2.5 font-bold text-sm bg-[#1B4F72] hover:bg-[#143D59] shadow-sm'
+                }
+            });
+        }
+    </script>
 </body>
 </html>

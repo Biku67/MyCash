@@ -24,19 +24,6 @@
             </div>
             <p class="text-gray-500 text-sm mt-1">Cek riwayat setoran uang kas yang telah dicatat bendahara kelas.</p>
         </div>
-
-        @if(count($tahunAjaranList) > 0)
-        <div class="flex items-center gap-2">
-            <form method="GET" action="{{ route('siswa.history.index') }}" class="inline-flex items-center gap-1.5 bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm">
-                <span class="material-symbols-outlined text-slate-500 text-base ml-1">school</span>
-                <select name="tahun_ajaran" onchange="this.form.submit()" class="bg-transparent text-xs font-bold text-slate-700 outline-none pr-2 cursor-pointer">
-                    @foreach($tahunAjaranList as $ta)
-                        <option value="{{ $ta }}" {{ $selectedTahunAjaran === $ta ? 'selected' : '' }}>TA {{ $ta }} {{ ($kelas->tahun_ajaran ?? '2025/2026') === $ta ? '(Aktif)' : '' }}</option>
-                    @endforeach
-                </select>
-            </form>
-        </div>
-        @endif
     </div>
 
     <!-- Parameter Info Card Banner -->
@@ -45,9 +32,7 @@
             <div>
                 <p class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Ketentuan Iuran</p>
                 <p class="text-sm font-bold text-slate-800 font-heading mt-0.5">
-                    TA: <span class="text-teal-700 font-bold bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-md text-xs">{{ $selectedTahunAjaran }}</span>
-                    <span class="text-slate-300 mx-1.5">&bull;</span>
-                    Periode: <span class="text-navy font-semibold">{{ $feePeriodType === 'mingguan' ? 'Mingguan (M1 - M24)' : 'Bulanan (' . ($kelas->bulan_mulai ?? 'Jul') . ' - ' . ($kelas->bulan_selesai ?? 'Jun') . ' · ' . count($periods) . ' Bulan)' }}</span> 
+                    Periode: <span class="text-navy font-semibold">{{ $feePeriodType === 'mingguan' ? 'Mingguan (M1 - M24)' : 'Bulanan (' . ($kelas->bulan_mulai ?? 'Jan') . ' - ' . ($kelas->bulan_selesai ?? 'Des') . ' · ' . count($periods) . ' Bulan)' }}</span> 
                     <span class="text-slate-300 mx-1.5">&bull;</span> 
                     Nominal Standar: <span class="text-emerald-600 font-bold">Rp {{ number_format($feeAmount, 0, ',', '.') }}</span>
                 </p>
@@ -82,7 +67,7 @@
                         <th class="min-w-[70px] !py-2.5 !px-1.5 font-bold text-[11px] uppercase tracking-wider">NIS</th>
                         @foreach($periods as $period)
                             <th class="text-center min-w-[36px] lg:min-w-[42px] !px-0.5 !py-2 font-bold text-[10px] uppercase tracking-wider">
-                                <span class="block leading-tight text-slate-700 font-extrabold">{{ $period['label'] }}</span>
+                                <span class="block leading-tight text-slate-700 font-extrabold">{{ $period }}</span>
                             </th>
                         @endforeach
                         <th class="min-w-[95px] !py-2.5 !px-2.5 font-bold text-[11px] uppercase tracking-wider text-right">Total Dibayar</th>
@@ -107,24 +92,22 @@
                             <td class="!py-2 !px-1.5 font-mono text-xs font-semibold text-gray-600">{{ $item->nis ?? '-' }}</td>
                             @foreach($periods as $period)
                                 @php
-                                    $pKey = $period['key'];
-                                    $pLabel = $period['label'];
-                                    $isPaid = in_array($pKey, $item->paid_periods);
-                                    $partialPaid = $item->partial_periods[$pKey] ?? 0;
+                                    $isPaid = in_array($period, $item->paid_periods);
+                                    $partialPaid = $item->partial_periods[$period] ?? 0;
                                 @endphp
                                 <td class="text-center align-middle !px-0.5 !py-1.5 transition-colors duration-150 {{ $isPaid ? 'bg-emerald-50/50' : ($partialPaid > 0 ? 'bg-amber-50/60' : 'bg-transparent') }}">
                                     <div class="inline-flex flex-col items-center justify-center">
                                         @if($isPaid)
                                             <span class="inline-flex items-center justify-center w-5 h-5 rounded-md bg-emerald-100/90 text-emerald-700 font-bold text-xs shadow-2xs" 
-                                                  title="{{ $item->nama }} - {{ $pLabel }}: Lunas">✓</span>
+                                                  title="{{ $item->nama }} - {{ $period }}: Lunas">✓</span>
                                         @elseif($partialPaid > 0)
                                             <span class="partial-badge inline-flex items-center justify-center px-1 h-5 rounded-md bg-amber-100 text-amber-800 font-bold text-[9px]" 
-                                                  title="{{ $item->nama }} - {{ $pLabel }}: Dicicil Rp {{ number_format($partialPaid, 0, ',', '.') }}">
+                                                  title="{{ $item->nama }} - {{ $period }}: Dicicil Rp {{ number_format($partialPaid, 0, ',', '.') }}">
                                                 {{ $partialPaid >= 1000 ? round($partialPaid/1000, 1) . 'k' : $partialPaid }}
                                             </span>
                                         @else
                                             <span class="inline-flex items-center justify-center w-5 h-5 rounded-md text-gray-300 font-bold text-xs select-none" 
-                                                  title="{{ $item->nama }} - {{ $pLabel }}: Belum Bayar">-</span>
+                                                  title="{{ $item->nama }} - {{ $period }}: Belum Bayar">-</span>
                                         @endif
                                     </div>
                                 </td>
@@ -213,15 +196,13 @@
                     <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.375rem;">
                         @foreach($periods as $period)
                             @php
-                                $pKey = $period['key'];
-                                $pLabel = $period['label'];
-                                $isPaid = in_array($pKey, $item->paid_periods);
-                                $partialPaid = $item->partial_periods[$pKey] ?? 0;
+                                $isPaid = in_array($period, $item->paid_periods);
+                                $partialPaid = $item->partial_periods[$period] ?? 0;
                             @endphp
                             <div class="flex items-center justify-between px-2 py-1.5 rounded-lg border select-none {{ $isPaid ? 'bg-emerald-50/90 text-emerald-800 border-emerald-300/80 shadow-xs' : ($partialPaid > 0 ? 'bg-amber-50/90 text-amber-800 border-amber-300/80' : 'bg-gray-50/80 text-gray-400 border-gray-200/60') }}"
-                                 title="{{ $pLabel }}: {{ $isPaid ? 'Lunas' : ($partialPaid > 0 ? 'Dicicil Rp ' . number_format($partialPaid, 0, ',', '.') : 'Belum Bayar') }}">
+                                 title="{{ $period }}: {{ $isPaid ? 'Lunas' : ($partialPaid > 0 ? 'Dicicil Rp ' . number_format($partialPaid, 0, ',', '.') : 'Belum Bayar') }}">
                                 <div class="min-w-0 pr-1">
-                                    <span class="text-[10px] font-bold block leading-none truncate {{ $isPaid ? 'text-emerald-900' : ($partialPaid > 0 ? 'text-amber-900' : 'text-gray-500') }}">{{ $pLabel }}</span>
+                                    <span class="text-[10px] font-bold block leading-none truncate {{ $isPaid ? 'text-emerald-900' : ($partialPaid > 0 ? 'text-amber-900' : 'text-gray-500') }}">{{ $period }}</span>
                                     @if(!$isPaid && $partialPaid > 0)
                                         <span class="partial-badge text-[7px] font-semibold text-amber-700 block leading-none truncate mt-0.5">
                                             {{ $partialPaid >= 1000 ? round($partialPaid/1000, 1) . 'k' : $partialPaid }}

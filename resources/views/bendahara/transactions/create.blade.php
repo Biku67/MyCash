@@ -36,7 +36,7 @@
 
             <div id="tour-bendahara-tx-category">
                 <label class="block text-xs font-semibold text-slate-600 mb-1.5">Kategori</label>
-                <select name="category" x-model="category" required class="input-clean w-full px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-800 bg-white border border-slate-200 rounded-xl">
+                <select name="category" id="categorySelect" x-model="category" required class="input-clean w-full px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-800 bg-white border border-slate-200 rounded-xl ui selection dropdown">
                     <template x-for="opt in categoryOptions" :key="opt">
                         <option :value="opt" x-text="opt" :selected="category === opt"></option>
                     </template>
@@ -48,8 +48,8 @@
                 <div id="tour-bendahara-form-student" x-show="type === 'income' && category === 'Uang Kas'" x-transition x-cloak class="space-y-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Nama Siswa Pembayar</label>
-                        <select name="student_id" class="input-clean w-full px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-800 bg-white border border-slate-200 rounded-xl">
-                            <option value="">-- Pilih Siswa --</option>
+                        <select name="student_id" id="student_id" class="ui search selection dropdown w-full">
+                            <option value="">-- Cari / Pilih Siswa --</option>
                             @foreach($students as $student)
                                 <option value="{{ $student->id }}" {{ old('student_id') == $student->id ? 'selected' : '' }}>
                                     {{ $student->nama }} (NIS: {{ $student->nis ?? '-' }})
@@ -58,23 +58,11 @@
                         </select>
                         @error('student_id')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Tahun Ajaran Tagihan (Target)</label>
-                        <select name="tahun_ajaran" class="input-clean w-full px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-800 bg-white border border-slate-200 rounded-xl">
-                            @foreach($tahunAjaranList as $ta)
-                                <option value="{{ $ta }}" {{ old('tahun_ajaran', $activeTahunAjaran) === $ta ? 'selected' : '' }}>
-                                    Tahun Ajaran {{ $ta }} {{ $activeTahunAjaran === $ta ? '(Aktif Saat Ini)' : '' }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <p class="mt-1 text-[11px] text-slate-400">Pilih tahun ajaran sebelumnya jika siswa ingin melunasi tunggakan tahun lalu.</p>
-                        @error('tahun_ajaran')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
-                    </div>
                     <!-- Automatic Allocation Callout -->
                     <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 flex items-start gap-2.5 leading-relaxed">
                         <span class="material-symbols-outlined text-slate-400 text-base flex-shrink-0 mt-0.5">info</span>
                         <div>
-                            <span class="font-semibold text-slate-800">Catatan:</span> Nominal setoran kas ini akan dialokasikan secara otomatis (FIFO) ke periode kas yang belum lunas pada tahun ajaran yang dipilih.
+                            <span class="font-semibold text-slate-800">Catatan:</span> Nominal setoran kas ini akan dialokasikan secara otomatis (FIFO) ke periode kas yang belum lunas.
                         </div>
                     </div>
                 </div>
@@ -93,13 +81,24 @@
             </div>
             
             <div id="tour-bendahara-tx-date">
-                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Tanggal Transaksi</label>
+                <label for="transaction_date" class="block text-xs font-semibold text-slate-600 mb-1.5">Tanggal Transaksi</label>
                 <div class="relative">
                     <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base pointer-events-none z-10">calendar_month</span>
-                    <input type="text" name="transaction_date" id="transaction_date" value="{{ old('transaction_date', now()->format('Y-m-d')) }}" max="{{ date('Y-m-d') }}" required class="datepicker-tx input-clean w-full pl-9 pr-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-800 bg-white border border-slate-200 rounded-xl" placeholder="Pilih tanggal transaksi...">
+                    <input 
+                        type="text" 
+                        name="transaction_date" 
+                        id="transaction_date" 
+                        value="{{ old('transaction_date', now()->format('Y-m-d')) }}" 
+                        max="{{ date('Y-m-d') }}" 
+                        required
+                        class="datepicker-tx input-clean w-full pl-9 pr-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-800 bg-white border border-slate-200 rounded-xl" 
+                        placeholder="Pilih tanggal transaksi..."
+                    >
                 </div>
                 <p class="mt-1 text-[11px] text-slate-400">Tanggal maksimal hari ini (tidak dapat memilih tanggal yang belum lewat).</p>
-                @error('transaction_date')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
+                @error('transaction_date')
+                    <p class="mt-1 text-xs text-rose-500">{{ $message }}</p>
+                @enderror
             </div>
             
             <div class="pt-2">
@@ -131,6 +130,13 @@ function transactionForm() {
                     this.category = this.expenseCategories[0] || 'Operasional Kelas';
                     this.description = '';
                 }
+                this.$nextTick(() => {
+                    const $cat = $('#categorySelect');
+                    if ($cat.length && typeof $cat.dropdown === 'function') {
+                        $cat.dropdown('refresh');
+                        $cat.dropdown('set selected', this.category);
+                    }
+                });
             });
         }
     }

@@ -97,15 +97,21 @@ $(document).ready(function() {
     });
 });
 
-function confirmDeleteTransaction(deleteUrl, description, amount) {
+function confirmDeleteTransaction(deleteUrl, description, amount, user) {
     Swal.fire({
         title: 'Hapus Transaksi?',
-        html: `<p class="text-xs sm:text-sm text-gray-600 mb-2">Anda akan menghapus transaksi:<br><strong class="text-gray-900">${description}</strong> (Rp ${amount}).</p><p class="text-[11px] text-red-500 font-medium">Tindakan ini akan membatalkan alokasi kas terkait dan terekam di riwayat log.</p>`,
+        html: `<p class="text-xs sm:text-sm text-gray-600 mb-2">Anda akan menghapus transaksi:<br><strong class="text-gray-900">${description} ${user}</strong> (Rp ${amount}).</p><p class="text-[11px] text-red-500 font-medium mb-2">Tindakan ini akan membatalkan alokasi kas terkait dan terekam di riwayat log.</p><p class="text-xs font-semibold text-gray-700 text-left">Alasan Penghapusan <span class="text-red-500">*</span>:</p>`,
         input: 'text',
-        inputPlaceholder: 'Tulis alasan penghapusan (opsional)...',
+        inputPlaceholder: 'Tulis alasan penghapusan (wajib diisi)...',
         inputAttributes: {
             autocapitalize: 'off',
+            required: 'required',
             class: 'swal2-input text-sm'
+        },
+        inputValidator: (value) => {
+            if (!value || !value.trim()) {
+                return 'Alasan penghapusan wajib diisi!';
+            }
         },
         icon: 'warning',
         showCancelButton: true,
@@ -116,9 +122,13 @@ function confirmDeleteTransaction(deleteUrl, description, amount) {
         reverseButtons: true,
         showLoaderOnConfirm: true,
         preConfirm: (reason) => {
+            if (!reason || !reason.trim()) {
+                Swal.showValidationMessage('Alasan penghapusan wajib diisi!');
+                return false;
+            }
             const form = document.getElementById('deleteTransactionForm');
             form.action = deleteUrl;
-            document.getElementById('deleteReasonInput').value = reason || 'Dihapus oleh bendahara';
+            document.getElementById('deleteReasonInput').value = reason.trim();
             form.submit();
         }
     });

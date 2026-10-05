@@ -33,22 +33,7 @@
     </div>
 
     <!-- Quick Stats Cards (5 Grid Items) -->
-    <div id="tour-admin-stats" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
-        <!-- Total Saldo Kas Seluruh Sekolah -->
-        <div class="card p-5 border border-slate-200/80 rounded-2xl shadow-sm flex flex-col justify-between">
-            <div class="flex items-center justify-between">
-                <p class="text-xs font-medium text-slate-500">Saldo Kas Sekolah</p>
-                <div class="w-10 h-10 rounded-xl bg-[#1B4F72] text-white flex items-center justify-center shadow-sm">
-                    <span class="material-symbols-outlined text-lg">account_balance</span>
-                </div>
-            </div>
-            <div class="mt-3">
-                <h3 class="text-xl sm:text-2xl font-extrabold text-slate-900 font-heading">
-                    Rp {{ number_format($totalSaldoSekolah, 0, ',', '.') }}
-                </h3>
-                <p class="text-[11px] text-slate-400 mt-0.5">Akumulasi {{ $totalKelas }} Kelas</p>
-            </div>
-        </div>
+    <div id="tour-admin-stats" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
         <!-- Total Kelas -->
         <div class="card p-5 border border-slate-200/80 rounded-2xl shadow-sm flex flex-col justify-between">

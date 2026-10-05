@@ -44,7 +44,7 @@
 
             <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1.5">Kategori</label>
-                <select name="category" x-model="category" required class="input-clean w-full px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-800 bg-white border border-slate-200 rounded-xl">
+                <select name="category" id="categorySelect" x-model="category" required class="input-clean w-full px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-800 bg-white border border-slate-200 rounded-xl ui selection dropdown">
                     <template x-for="opt in categoryOptions" :key="opt">
                         <option :value="opt" x-text="opt" :selected="category === opt"></option>
                     </template>
@@ -54,8 +54,8 @@
 
             <div x-show="type === 'income' && category === 'Uang Kas'" x-transition x-cloak>
                 <label class="block text-xs font-semibold text-slate-600 mb-1.5">Nama Siswa Pembayar</label>
-                <select name="student_id" class="input-clean w-full px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-800 bg-white border border-slate-200 rounded-xl">
-                    <option value="">-- Pilih Siswa --</option>
+                <select name="student_id" id="student_id" class="ui search selection dropdown w-full">
+                    <option value="">-- Cari / Pilih Siswa --</option>
                     @foreach($students as $student)
                         <option value="{{ $student->id }}" {{ old('student_id', $currentStudentId) == $student->id ? 'selected' : '' }}>
                             {{ $student->nama }} (NIS: {{ $student->nis ?? '-' }})
@@ -125,6 +125,13 @@ function editTransactionForm() {
                 } else {
                     this.category = this.expenseCategories[0] || 'Operasional Kelas';
                 }
+                this.$nextTick(() => {
+                    const $cat = $('#categorySelect');
+                    if ($cat.length && typeof $cat.dropdown === 'function') {
+                        $cat.dropdown('refresh');
+                        $cat.dropdown('set selected', this.category);
+                    }
+                });
             });
         }
     }

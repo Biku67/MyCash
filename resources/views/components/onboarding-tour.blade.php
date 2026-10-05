@@ -336,8 +336,8 @@
     $stepsJson = json_encode($tourConfig[$role] ?? $tourConfig['siswa']);
 @endphp
 
-<!-- Driver.js CSS Fallback in case not bundled -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css"/>
+<!-- Driver.js CSS (Local Vendor) -->
+<link rel="stylesheet" href="{{ asset('vendor/driverjs/driver.css') }}"/>
 
 <!-- Onboarding Tour Component (Alpine + Driver.js Integration) -->
 <div x-data="onboardingTour('{{ $role }}', {{ $stepsJson }})"
@@ -402,7 +402,7 @@ document.addEventListener('alpine:init', () => {
             if (!document.getElementById('driver-js-script')) {
                 const script = document.createElement('script');
                 script.id = 'driver-js-script';
-                script.src = 'https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js';
+                script.src = '{{ asset('vendor/driverjs/driver.js.iife.js') }}';
                 script.onload = () => {
                     if (window.driver?.js?.driver) {
                         window.driver = window.driver.js.driver;

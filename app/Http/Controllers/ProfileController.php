@@ -16,8 +16,10 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        $user = $request->user()->load(['waliKelas.kelas', 'bendahara.kelas', 'siswa.kelas']);
+
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user' => $user,
         ]);
     }
 
@@ -26,13 +28,26 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $validated = $request->validated();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        $user->save();
+
+        $roleProfile = $user->waliKelas ?? $user->bendahara ?? $user->siswa;
+        if ($roleProfile) {
+            $profileData = ['nama' => $user->name];
+            if (array_key_exists('no_hp', $validated)) {
+                $profileData['no_hp'] = $validated['no_hp'];
+            }
+            $roleProfile->update($profileData);
+        }
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }

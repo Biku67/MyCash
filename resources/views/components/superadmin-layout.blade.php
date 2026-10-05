@@ -10,11 +10,12 @@
     <link rel="apple-touch-icon" href="{{ asset('assets/logo-mycash.png') }}">
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <!-- Local Vendor Libraries (No CDN) -->
+    <script src="{{ asset('vendor/jquery/jquery-3.7.1.min.js') }}"></script>
+    <link rel="stylesheet" href="{{ asset('vendor/datatables/jquery.dataTables.min.css') }}">
+    <script src="{{ asset('vendor/datatables/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('vendor/apexcharts/apexcharts.min.js') }}"></script>
+    <script src="{{ asset('vendor/sweetalert2/sweetalert2.all.min.js') }}"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         [x-cloak] { display: none !important; }
@@ -218,7 +219,7 @@
                     <p class="text-xs text-white/40 truncate">{{ Auth::user()->email }}</p>
                 </div>
             </div>
-            <form method="POST" action="{{ route('logout') }}">
+            <form method="POST" action="{{ route('logout') }}" onsubmit="return swalConfirmLogout(event)">
                 @csrf
                 <button type="submit" class="w-full flex items-center gap-2 px-4 py-2 text-sm text-white/50 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors">
                     <span class="material-symbols-outlined text-lg">logout</span>Logout
@@ -247,7 +248,7 @@
                 <button type="button" onclick="window.dispatchEvent(new CustomEvent('start-tour'))" class="p-1.5 text-gray-400 hover:text-navy hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center" title="Panduan Alur MyCash">
                     <span class="material-symbols-outlined text-xl">help</span>
                 </button>
-                <a href="{{ route('logout.get') }}" class="hidden lg:inline-flex p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Logout">
+                <a href="{{ route('logout.get') }}" onclick="return swalConfirmLogout(event)" class="hidden lg:inline-flex p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Logout">
                     <span class="material-symbols-outlined text-xl">logout</span>
                 </a>
             </div>
@@ -288,7 +289,7 @@
         </a>
 
         <!-- 2. Logout -->
-        <form method="POST" action="{{ route('logout') }}" class="m-0 p-0">
+        <form method="POST" action="{{ route('logout') }}" onsubmit="return swalConfirmLogout(event)" class="m-0 p-0">
             @csrf
             <button type="submit"
                     class="w-12 h-12 rounded-full bg-white border border-gray-100/80 flex items-center justify-center active:scale-85 hover:scale-105 transition-all focus:outline-none"
@@ -390,6 +391,100 @@
         }).then((result) => { if (result.isConfirmed) event.target.submit(); });
         return false;
     }
+    function swalConfirmLogout(event) {
+        event.preventDefault();
+        const element = event.currentTarget || event.target;
+        const form = element ? element.closest('form') : null;
+        const anchor = element ? element.closest('a') : null;
+
+        Swal.fire({
+            title: 'Konfirmasi Keluar',
+            text: 'Apakah Anda yakin ingin keluar dari akun MyCash?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#DC2626',
+            cancelButtonColor: '#6B7280',
+            confirmButtonText: 'Ya, Keluar',
+            cancelButtonText: 'Batal',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                if (form) {
+                    form.submit();
+                } else if (anchor && anchor.href) {
+                    window.location.href = anchor.href;
+                } else {
+                    window.location.href = "{{ route('logout.get') }}";
+                }
+            }
+        });
+        return false;
+    }
+
+    // Global Logout Interceptor
+    let isLoggingOut = false;
+    document.addEventListener('click', function(e) {
+        if (isLoggingOut) return;
+        const trigger = e.target.closest('a[href*="logout"], form[action*="logout"] button, button[data-logout], .btn-logout');
+        if (!trigger) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        const form = trigger.closest('form');
+        const anchor = trigger.closest('a');
+
+        Swal.fire({
+            title: 'Konfirmasi Keluar',
+            text: 'Apakah Anda yakin ingin keluar dari akun MyCash?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#DC2626',
+            cancelButtonColor: '#6B7280',
+            confirmButtonText: 'Ya, Keluar',
+            cancelButtonText: 'Batal',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                isLoggingOut = true;
+                if (form) {
+                    HTMLFormElement.prototype.submit.call(form);
+                } else if (anchor && anchor.href && !anchor.href.startsWith('javascript:')) {
+                    window.location.href = anchor.href;
+                } else {
+                    window.location.href = "{{ route('logout.get') }}";
+                }
+            }
+        });
+    }, true);
+
+    document.addEventListener('submit', function(e) {
+        if (isLoggingOut) return;
+        const form = e.target;
+        if (form && form.action && form.action.includes('logout')) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            Swal.fire({
+                title: 'Konfirmasi Keluar',
+                text: 'Apakah Anda yakin ingin keluar dari akun MyCash?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#DC2626',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Ya, Keluar',
+                cancelButtonText: 'Batal',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    isLoggingOut = true;
+                    HTMLFormElement.prototype.submit.call(form);
+                }
+            });
+        }
+    }, true);
     </script>
     <style>.swal-toast-custom { font-family: 'Work Sans', sans-serif !important; font-size: 14px !important; }</style>
     <x-onboarding-tour />

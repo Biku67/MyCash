@@ -35,7 +35,6 @@ Route::middleware(['auth', 'role:bendahara'])->group(function () {
     // ─── Checklist Kas & Presensi Siswa (Bendahara)
     Route::get('/bendahara/students', [App\Http\Controllers\Bendahara\StudentController::class, 'index'])->name('bendahara.students.index');
     Route::post('/bendahara/students/fee-settings', [App\Http\Controllers\Bendahara\StudentController::class, 'updateFeeSettings'])->name('bendahara.students.updateFeeSettings');
-    Route::post('/bendahara/students/tutup-buku', [App\Http\Controllers\Bendahara\StudentController::class, 'tutupBuku'])->name('bendahara.students.tutupBuku');
     Route::post('/bendahara/students/reset-matrix', [App\Http\Controllers\Bendahara\StudentController::class, 'resetMatrix'])->name('bendahara.students.resetMatrix');
     Route::post('/bendahara/students/toggle-absensi', [App\Http\Controllers\Bendahara\StudentController::class, 'toggleAbsensi'])->name('bendahara.students.toggleAbsensi');
     Route::get('/bendahara/students/export', [App\Http\Controllers\Bendahara\StudentController::class, 'exportExcel'])->name('bendahara.students.export');
@@ -112,12 +111,11 @@ Route::middleware(['auth', 'role:wali_kelas'])->prefix('wali-kelas')->name('wali
     Route::delete('/students/{id}', [App\Http\Controllers\WaliKelas\StudentController::class, 'destroy'])->name('students.destroy');
     Route::post('/students/{id}/reset-password', [App\Http\Controllers\WaliKelas\StudentController::class, 'resetPassword'])->name('students.resetPassword');
 
-    // Laporan Keuangan Kas (Wali Kelas)
+    // Laporan & Checklist Keuangan Kas (Wali Kelas)
+    Route::get('/checklist', [App\Http\Controllers\WaliKelas\ChecklistController::class, 'index'])->name('checklist.index');
     Route::get('/report', [App\Http\Controllers\WaliKelas\ReportController::class, 'index'])->name('report.index');
     Route::get('/report/export-excel', [App\Http\Controllers\WaliKelas\ReportController::class, 'exportExcel'])->name('report.exportExcel');
     Route::get('/report/export-pdf', [App\Http\Controllers\WaliKelas\ReportController::class, 'exportPdf'])->name('report.exportPdf');
-    Route::get('/report/export-tunggakan-excel', [App\Http\Controllers\WaliKelas\ReportController::class, 'exportTunggakanExcel'])->name('report.exportTunggakanExcel');
-    Route::get('/report/export-tunggakan-pdf', [App\Http\Controllers\WaliKelas\ReportController::class, 'exportTunggakanPdf'])->name('report.exportTunggakanPdf');
 });
 
 // ─── Siswa (Dashboard & Riwayat Pembayaran Checklist Kas)
@@ -125,7 +123,7 @@ Route::middleware(['auth', 'role:siswa'])->prefix('siswa')->name('siswa.')->grou
     Route::get('/dashboard', [App\Http\Controllers\Siswa\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/history', [App\Http\Controllers\Siswa\HistoryController::class, 'index'])->name('history.index');
     Route::get('/checklist', [App\Http\Controllers\Siswa\HistoryController::class, 'index'])->name('checklist');
-    Route::get('/transactions', function () { return 'Laporan Kas'; })->name('transactions.index');
+    Route::get('/transactions', fn() => redirect()->route('siswa.history.index'))->name('transactions.index');
     Route::get('/notifications', [App\Http\Controllers\Siswa\NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/check-unread', [App\Http\Controllers\Siswa\NotificationController::class, 'checkUnread'])->name('notifications.checkUnread');
     Route::get('/notifications/{id}', [App\Http\Controllers\Siswa\NotificationController::class, 'show'])->name('notifications.show');

@@ -26,42 +26,33 @@ class HistoryController extends Controller
                 'periods' => [],
                 'feePeriodType' => 'bulanan',
                 'feeAmount' => 0,
-                'tahunAjaranList' => [],
-                'selectedTahunAjaran' => '2025/2026',
             ]);
         }
 
         $kelas = $student->kelas;
         $feePeriodType = $kelas->tipe_periode ?? 'bulanan';
         $feeAmount = (float)($kelas->nominal_standar ?? 20000);
-        $tahunAjaranList = Kelas::getTahunAjaranOptions();
-        $selectedTahunAjaran = $request->query('tahun_ajaran', $kelas->tahun_ajaran ?? '2025/2026');
-        $periods = $kelas ? $kelas->getPeriods($selectedTahunAjaran) : [];
+        $periods = $kelas ? $kelas->getPeriods() : [];
 
-        // Ambil semua detail transaksi kas milik siswa ini pada tahun ajaran yang dipilih
-        $transactions = DetailTransaksiKas::where('id_siswa', $student->id)
-            ->whereNotNull('periode')
-            ->where(function ($q) use ($selectedTahunAjaran) {
-                $q->where('tahun_ajaran', $selectedTahunAjaran)
-                  ->orWhereNull('tahun_ajaran');
-            })
-            ->get();
+        // Ambil detail transaksi kas milik siswa ini
+        $query = DetailTransaksiKas::where('id_siswa', $student->id)
+            ->whereNotNull('periode');
+        if ($kelas && $kelas->last_reset_at) {
+            $query->where('created_at', '>', $kelas->last_reset_at);
+        }
+        $transactions = $query->get();
 
         $periodTotals = $transactions->groupBy('periode')->map(fn($group) => (float)$group->sum('nominal'));
 
         $paidPeriods = [];
         $partialPeriods = [];
-        foreach ($periods as $pItem) {
-            $periodKey = $pItem['key'];
-            $periodPaid = (float)$periodTotals->get($periodKey, 0.0);
-            if ($periodPaid <= 0 && $periodTotals->has($pItem['month'])) {
-                $periodPaid = (float)$periodTotals->get($pItem['month'], 0.0);
-            }
+        foreach ($periods as $period) {
+            $periodPaid = (float)$periodTotals->get($period, 0.0);
 
             if ($periodPaid >= $feeAmount) {
-                $paidPeriods[] = $periodKey;
+                $paidPeriods[] = $period;
             } elseif ($periodPaid > 0) {
-                $partialPeriods[$periodKey] = $periodPaid;
+                $partialPeriods[$period] = $periodPaid;
             }
         }
 
@@ -90,9 +81,7 @@ class HistoryController extends Controller
             'kelas',
             'periods',
             'feePeriodType',
-            'feeAmount',
-            'tahunAjaranList',
-            'selectedTahunAjaran'
+            'feeAmount'
         ));
     }
 }

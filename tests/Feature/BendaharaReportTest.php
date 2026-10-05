@@ -32,7 +32,6 @@ class BendaharaReportTest extends TestCase
         $response = $this->actingAs($bendaharaUser)->get(route('bendahara.report.index'));
         $response->assertStatus(200);
         $response->assertSee('Laporan Keuangan Kas');
-        $response->assertSee('Saldo Awal');
         $response->assertSee('Total Pemasukan');
         $response->assertSee('Total Pengeluaran');
         $response->assertSee('Saldo Kas Akhir');
@@ -110,20 +109,21 @@ class BendaharaReportTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_bendahara_can_view_tunggakan_tab_and_arrears_summary(): void
+    public function test_chart_renders_apexcharts_and_handles_month_stepping(): void
     {
         $bendaharaUser = User::where('role', 'bendahara')->first();
-        $this->assertNotNull($bendaharaUser);
 
-        $response = $this->actingAs($bendaharaUser)->get(route('bendahara.report.index', ['tab' => 'tunggakan']));
+        $response = $this->actingAs($bendaharaUser)->get(route('bendahara.report.index', [
+            'start_date' => '2026-01-31',
+            'end_date'   => '2026-03-15',
+        ]));
+
         $response->assertStatus(200);
-        $response->assertSee('Tab 2: Status Tunggakan Siswa');
-        $response->assertSee('Total Target Tagihan Kas');
-        $response->assertSee('Kas Terkumpul (Lunas)');
-        $response->assertSee('Total Sisa Tunggakan');
-        $response->assertSee('Kepatuhan Bayar Siswa');
-        $response->assertSee('Daftar Status Tunggakan Per Siswa');
-        $response->assertSee(route('bendahara.students.exportExcel'));
-        $response->assertSee(route('bendahara.students.exportPdf'));
+        $response->assertSee('id="cashFlowChart"', false);
+        $response->assertSee('new ApexCharts', false);
+        $response->assertSee('setPreset');
+        $response->assertViewHas('months', function ($months) {
+            return count($months) === 3; // Jan, Feb, Mar 2026 without skipping February
+        });
     }
 }

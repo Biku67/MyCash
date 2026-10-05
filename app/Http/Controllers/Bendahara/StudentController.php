@@ -44,17 +44,13 @@ class StudentController extends Controller
         $feePeriodType = $kelas->tipe_periode ?? 'bulanan';
         $feeAmount = (float)($kelas->nominal_standar ?? 20000);
         $monthList = Kelas::getMonthList();
-        $tahunAjaranList = Kelas::getTahunAjaranOptions();
-        $selectedTahunAjaran = $request->query('tahun_ajaran', $kelas->tahun_ajaran ?? '2025/2026');
-
-        $periods = $kelas->getPeriods($selectedTahunAjaran);
+        $periods = $kelas->getPeriods();
 
         $students = Siswa::where('kode_kelas', $bendahara->kode_kelas)
-            ->with(['detailTransaksiKas' => function ($query) use ($selectedTahunAjaran) {
-                $query->where(function ($q) use ($selectedTahunAjaran) {
-                    $q->where('tahun_ajaran', $selectedTahunAjaran)
-                      ->orWhereNull('tahun_ajaran');
-                });
+            ->with(['detailTransaksiKas' => function ($query) use ($kelas) {
+                if ($kelas->last_reset_at) {
+                    $query->where('created_at', '>', $kelas->last_reset_at);
+                }
             }, 'user'])
             ->orderBy('nama', 'asc')
             ->get()
@@ -67,24 +63,19 @@ class StudentController extends Controller
 
                 $paidPeriods = [];
                 $partialPeriods = [];
-                foreach ($periods as $pItem) {
-                    $periodKey = $pItem['key'];
-                    $periodPaid = $periodTotals->get($periodKey, 0.0);
-                    if ($periodPaid <= 0 && $periodTotals->has($pItem['month'])) {
-                        $periodPaid = $periodTotals->get($pItem['month'], 0.0);
-                    }
-
+                foreach ($periods as $period) {
+                    $periodPaid = $periodTotals->get($period, 0.0);
                     if ($periodPaid >= $feeAmount) {
-                        $paidPeriods[] = $periodKey;
+                        $paidPeriods[] = $period;
                     } elseif ($periodPaid > 0) {
-                        $partialPeriods[$periodKey] = $periodPaid;
+                        $partialPeriods[$period] = $periodPaid;
                     }
                 }
 
                 $student->paid_periods = $paidPeriods;
                 $student->partial_periods = $partialPeriods;
 
-                // Total actual contributed is the SUM of nominals in this academic year
+                // Total actual contributed is the SUM of nominals in this active period
                 $student->contributed = (float)$student->detailTransaksiKas->sum('nominal');
 
                 $totalPeriods = count($periods);
@@ -103,7 +94,7 @@ class StudentController extends Controller
             });
 
         return view('bendahara.students.index', compact(
-            'students', 'periods', 'feePeriodType', 'feeAmount', 'kelas', 'monthList', 'tahunAjaranList', 'selectedTahunAjaran'
+            'students', 'periods', 'feePeriodType', 'feeAmount', 'kelas', 'monthList'
         ));
     }
 
@@ -117,7 +108,6 @@ class StudentController extends Controller
             'fee_amount' => 'required|numeric|min:0',
             'start_month' => 'nullable|string|in:Jan,Feb,Mar,Apr,Mei,Jun,Jul,Agt,Sep,Okt,Nov,Des',
             'end_month' => 'nullable|string|in:Jan,Feb,Mar,Apr,Mei,Jun,Jul,Agt,Sep,Okt,Nov,Des',
-            'tahun_ajaran' => 'nullable|string|max:15',
         ]);
 
         $bendahara = $this->getBendahara();
@@ -127,10 +117,6 @@ class StudentController extends Controller
             'tipe_periode' => $tipePeriode,
             'nominal_standar' => $validated['fee_amount'],
         ];
-
-        if (!empty($validated['tahun_ajaran'])) {
-            $dataToUpdate['tahun_ajaran'] = $validated['tahun_ajaran'];
-        }
 
         if ($tipePeriode === 'bulanan') {
             if (!empty($validated['start_month'])) {
@@ -143,81 +129,8 @@ class StudentController extends Controller
 
         $bendahara->kelas->update($dataToUpdate);
 
-        if ($request->has('tahun_ajaran')) {
-            return redirect()->route('bendahara.students.index', ['tahun_ajaran' => $dataToUpdate['tahun_ajaran'] ?? $bendahara->kelas->tahun_ajaran])
-                ->with('success', 'Pengaturan parameter iuran kas kelas berhasil diperbarui.');
-        }
-
         return redirect()->route('bendahara.students.index')
             ->with('success', 'Pengaturan parameter iuran kas kelas berhasil diperbarui.');
-    }
-
-    /**
-     * Tutup Buku & Rollover Saldo Kas to Next Academic Year.
-     */
-    public function tutupBuku(Request $request)
-    {
-        $bendahara = $this->getBendahara();
-        $kelas = $bendahara->kelas;
-        $currentTa = $kelas->tahun_ajaran ?? '2025/2026';
-
-        // Calculate current physical cash balance for the class (all time)
-        $totalPemasukan = (float)TransaksiKas::where('kode_kelas', $bendahara->kode_kelas)
-            ->where('jenis_transaksi', 'pemasukan')
-            ->sum('total_nominal');
-        $totalPengeluaran = (float)TransaksiKas::where('kode_kelas', $bendahara->kode_kelas)
-            ->where('jenis_transaksi', 'pengeluaran')
-            ->sum('total_nominal');
-        $sisaSaldo = max(0.0, $totalPemasukan - $totalPengeluaran);
-
-        // Determine next academic year
-        $parts = explode('/', $currentTa);
-        $startYear = (int)($parts[0] ?? date('Y'));
-        $endYear = (int)($parts[1] ?? ($startYear + 1));
-        $nextTa = ($startYear + 1) . '/' . ($endYear + 1);
-
-        \Illuminate\Support\Facades\DB::transaction(function () use ($bendahara, $kelas, $currentTa, $nextTa, $sisaSaldo) {
-            // Find or create Category 'Saldo Awal'
-            $kategori = Kategori::firstOrCreate([
-                'nama_kategori' => 'Saldo Awal',
-                'tipe' => 'pemasukan',
-            ]);
-
-            // If there is physical cash to carry over, create the initial balance transaction
-            if ($sisaSaldo > 0) {
-                $transaksi = TransaksiKas::create([
-                    'kode_kelas' => $bendahara->kode_kelas,
-                    'id_bendahara' => $bendahara->id,
-                    'id_kategori' => $kategori->id,
-                    'jenis_transaksi' => 'pemasukan',
-                    'tahun_ajaran' => $nextTa,
-                    'total_nominal' => $sisaSaldo,
-                    'tanggal_transaksi' => now()->format('Y-m-d'),
-                    'keterangan' => 'Saldo Awal Pindahan TA ' . $currentTa,
-                ]);
-
-                \App\Models\LogTransaksiKas::create([
-                    'id_transaksi_kas' => $transaksi->id,
-                    'kode_kelas' => $bendahara->kode_kelas,
-                    'user_id' => auth()->id(),
-                    'aksi' => 'create',
-                    'alasan' => 'Tutup Buku & Rollover Saldo Awal TA ' . $nextTa,
-                    'data_sesudahnya' => [
-                        'keterangan' => $transaksi->keterangan,
-                        'total_nominal' => $sisaSaldo,
-                        'tahun_ajaran' => $nextTa,
-                    ],
-                ]);
-            }
-
-            // Update active Tahun Ajaran on Kelas
-            $kelas->update([
-                'tahun_ajaran' => $nextTa,
-            ]);
-        });
-
-        return redirect()->route('bendahara.students.index', ['tahun_ajaran' => $nextTa])
-            ->with('success', "Tutup Buku berhasil! Tahun Ajaran {$nextTa} telah aktif. Sisa saldo Rp " . number_format($sisaSaldo, 0, ',', '.') . " berhasil dipindahkan sebagai Saldo Awal.");
     }
 
     /**
@@ -241,7 +154,6 @@ class StudentController extends Controller
             'student_id' => 'required|exists:siswa,id',
             'period' => 'required|string',
             'status' => 'required|boolean',
-            'tahun_ajaran' => 'nullable|string|max:15',
         ]);
 
         $bendahara = $this->getBendahara();
@@ -250,19 +162,17 @@ class StudentController extends Controller
             ->firstOrFail();
 
         $kelas = $bendahara->kelas;
-        $ta = $request->input('tahun_ajaran', $kelas->tahun_ajaran ?? '2025/2026');
         $feeAmount = (float)($kelas->nominal_standar ?? 20000);
 
-        DB::transaction(function () use ($request, $bendahara, $student, $feeAmount, $ta) {
+        DB::transaction(function () use ($request, $bendahara, $student, $feeAmount, $kelas) {
             if ($request->status) {
-                // Check what is already paid for this period in this academic year
-                $currentPaidForPeriod = (float)DetailTransaksiKas::where('id_siswa', $student->id)
-                    ->where('periode', $request->period)
-                    ->where(function ($q) use ($ta) {
-                        $q->where('tahun_ajaran', $ta)
-                          ->orWhereNull('tahun_ajaran');
-                    })
-                    ->sum('nominal');
+                // Check what is already paid for this period
+                $query = DetailTransaksiKas::where('id_siswa', $student->id)
+                    ->where('periode', $request->period);
+                if ($kelas->last_reset_at) {
+                    $query->where('created_at', '>', $kelas->last_reset_at);
+                }
+                $currentPaidForPeriod = (float)$query->sum('nominal');
 
                 $amountToPay = max(0.0, $feeAmount - $currentPaidForPeriod);
 
@@ -276,7 +186,6 @@ class StudentController extends Controller
                         'id_bendahara' => $bendahara->id,
                         'id_kategori' => $kategori->id,
                         'jenis_transaksi' => 'pemasukan',
-                        'tahun_ajaran' => $ta,
                         'total_nominal' => $amountToPay,
                         'tanggal_transaksi' => now()->format('Y-m-d'),
                         'keterangan' => "Pembayaran kas {$request->period} - {$student->nama}",
@@ -286,7 +195,6 @@ class StudentController extends Controller
                         'id_transaksi_kas' => $transaksi->id,
                         'id_siswa' => $student->id,
                         'periode' => $request->period,
-                        'tahun_ajaran' => $ta,
                         'nominal' => $amountToPay,
                     ]);
 
@@ -302,7 +210,6 @@ class StudentController extends Controller
                             'total_nominal' => $amountToPay,
                             'student_name' => $student->nama,
                             'periode' => $request->period,
-                            'tahun_ajaran' => $ta,
                         ],
                     ]);
 
@@ -317,13 +224,12 @@ class StudentController extends Controller
                 }
             } else {
                 // Remove checklist
-                $details = DetailTransaksiKas::where('id_siswa', $student->id)
-                    ->where('periode', $request->period)
-                    ->where(function ($q) use ($ta) {
-                        $q->where('tahun_ajaran', $ta)
-                          ->orWhereNull('tahun_ajaran');
-                    })
-                    ->get();
+                $query = DetailTransaksiKas::where('id_siswa', $student->id)
+                    ->where('periode', $request->period);
+                if ($kelas->last_reset_at) {
+                    $query->where('created_at', '>', $kelas->last_reset_at);
+                }
+                $details = $query->get();
 
                 foreach ($details as $detail) {
                     $tx = $detail->transaksiKas;
@@ -339,7 +245,6 @@ class StudentController extends Controller
                                 'total_nominal' => (float)$tx->total_nominal,
                                 'student_name' => $student->nama,
                                 'periode' => $request->period,
-                                'tahun_ajaran' => $ta,
                             ],
                         ]);
                     }
@@ -354,14 +259,13 @@ class StudentController extends Controller
             }
         });
 
-        // Recalculate totals for this academic year
-        $totalPaid = (float)DetailTransaksiKas::where('id_siswa', $student->id)
-            ->where(function ($q) use ($ta) {
-                $q->where('tahun_ajaran', $ta)
-                  ->orWhereNull('tahun_ajaran');
-            })
-            ->sum('nominal');
-        $totalPeriods = count($kelas->getPeriods($ta));
+        // Recalculate totals
+        $calcQuery = DetailTransaksiKas::where('id_siswa', $student->id);
+        if ($kelas->last_reset_at) {
+            $calcQuery->where('created_at', '>', $kelas->last_reset_at);
+        }
+        $totalPaid = (float)$calcQuery->sum('nominal');
+        $totalPeriods = count($kelas->getPeriods());
         $totalDebt = max(0.0, ($totalPeriods * $feeAmount) - $totalPaid);
 
         return response()->json([
@@ -379,10 +283,9 @@ class StudentController extends Controller
     public function exportExcel(Request $request)
     {
         $bendahara = $this->getBendahara();
-        $selectedTahunAjaran = $request->query('tahun_ajaran', $bendahara->kelas->tahun_ajaran ?? '2025/2026');
         return Excel::download(
-            new BendaharaStudentExport($bendahara->kode_kelas, $selectedTahunAjaran),
-            'data-siswa-' . $bendahara->kode_kelas . '-' . str_replace('/', '-', $selectedTahunAjaran) . '.xlsx'
+            new BendaharaStudentExport($bendahara->kode_kelas),
+            'data-siswa-' . $bendahara->kode_kelas . '.xlsx'
         );
     }
 
@@ -393,17 +296,15 @@ class StudentController extends Controller
     {
         $bendahara = $this->getBendahara();
         $kelas = $bendahara->kelas;
-        $selectedTahunAjaran = $request->query('tahun_ajaran', $kelas->tahun_ajaran ?? '2025/2026');
         $feeAmount = (float)($kelas->nominal_standar ?? 20000);
-        $periods = $kelas->getPeriods($selectedTahunAjaran);
+        $periods = $kelas->getPeriods();
         $totalPeriods = count($periods);
 
         $students = Siswa::where('kode_kelas', $bendahara->kode_kelas)
-            ->with(['detailTransaksiKas' => function ($q) use ($selectedTahunAjaran) {
-                $q->where(function ($sq) use ($selectedTahunAjaran) {
-                    $sq->where('tahun_ajaran', $selectedTahunAjaran)
-                       ->orWhereNull('tahun_ajaran');
-                });
+            ->with(['detailTransaksiKas' => function ($q) use ($kelas) {
+                if ($kelas->last_reset_at) {
+                    $q->where('created_at', '>', $kelas->last_reset_at);
+                }
             }, 'user'])
             ->orderBy('nama', 'asc')
             ->get();
@@ -433,12 +334,12 @@ class StudentController extends Controller
         }
 
         $pdf = Pdf::loadView('exports.pdf', [
-            'title' => 'Daftar Siswa & Status Kas TA ' . $selectedTahunAjaran,
+            'title' => 'Daftar Siswa & Status Kas Kelas ' . $kelas->nama_kelas,
             'kelas' => $kelas,
             'headings' => $headings,
             'rows' => $rows,
         ]);
 
-        return $pdf->download('siswa-kas-' . $bendahara->kode_kelas . '-' . str_replace('/', '-', $selectedTahunAjaran) . '.pdf');
+        return $pdf->download('siswa-kas-' . $bendahara->kode_kelas . '.pdf');
     }
 }

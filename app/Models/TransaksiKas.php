@@ -28,7 +28,6 @@ class TransaksiKas extends Model
         'id_bendahara',
         'id_kategori',
         'jenis_transaksi',
-        'tahun_ajaran',
         'total_nominal',
         'tanggal_transaksi',
         'keterangan',

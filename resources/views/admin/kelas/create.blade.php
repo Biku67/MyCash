@@ -67,7 +67,7 @@
 
                     <div class="sm:col-span-2">
                         <label class="block text-xs font-semibold text-slate-700 mb-1.5">Wali Kelas (Opsional)</label>
-                        <select name="id_wali_kelas" class="input-clean w-full px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-800 bg-white border border-slate-200 rounded-xl">
+                        <select name="id_wali_kelas" class="ui search selection dropdown input-clean w-full">
                             <option value="">-- Pilih Wali Kelas (Bisa Ditentukan Nanti) --</option>
                             @foreach($waliKelasList as $wali)
                                 <option value="{{ $wali->id }}" {{ old('id_wali_kelas') == $wali->id ? 'selected' : '' }}>
@@ -76,35 +76,6 @@
                             @endforeach
                         </select>
                         @error('id_wali_kelas') <p class="text-xs text-rose-500 mt-1">{{ $message }}</p> @enderror
-                    </div>
-                </div>
-            </div>
-
-            <div class="border-t border-slate-100 my-4"></div>
-
-            <!-- Section 2: Parameter Iuran Kas -->
-            <div>
-                <h3 class="text-sm font-bold text-slate-900 font-heading mb-3.5 flex items-center gap-2">
-                    <span class="material-symbols-outlined text-teal-600 text-lg">payments</span>
-                    <span>Pengaturan Iuran Kas</span>
-                </h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Tipe Periode Iuran <span class="text-rose-500">*</span></label>
-                        <select name="tipe_periode" required class="input-clean w-full px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-800 bg-white border border-slate-200 rounded-xl">
-                            <option value="bulanan" {{ old('tipe_periode') === 'bulanan' ? 'selected' : '' }}>Bulanan (Januari - Desember)</option>
-                            <option value="mingguan" {{ old('tipe_periode') === 'mingguan' ? 'selected' : '' }}>Mingguan (Minggu 1 - Minggu 24)</option>
-                        </select>
-                        @error('tipe_periode') <p class="text-xs text-rose-500 mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nominal Standar per Periode (Rp) <span class="text-rose-500">*</span></label>
-                        <div class="relative">
-                            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Rp</span>
-                            <input type="number" name="nominal_standar" value="{{ old('nominal_standar', 20000) }}" required min="0" step="1000" class="input-clean w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm font-mono font-semibold text-slate-900 bg-white border border-slate-200 rounded-xl" placeholder="20000">
-                        </div>
-                        @error('nominal_standar') <p class="text-xs text-rose-500 mt-1">{{ $message }}</p> @enderror
                     </div>
                 </div>
             </div>

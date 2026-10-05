@@ -1,3 +1,5 @@
+@import 'flatpickr/dist/flatpickr.min.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -237,5 +239,637 @@ input[type=range].scrubber-slider:active::-webkit-slider-thumb {
 .grain-overlay {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.035'/%3E%3C/svg%3E");
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   PREMIUM MODERN DROPDOWN (<select>) STYLING
+   ───────────────────────────────────────────────────────────────────────────── */
+select,
+select.input-clean,
+.custom-select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-color: #ffffff !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e") !important;
+  background-position: right 0.875rem center !important;
+  background-repeat: no-repeat !important;
+  background-size: 1.15rem 1.15rem !important;
+  padding-right: 2.6rem !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 0.75rem !important;
+  color: #0F172A !important;
+  font-family: 'Work Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.03) !important;
+  transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-image 0.2s ease !important;
+}
+
+select:hover,
+select.input-clean:hover {
+  border-color: #CBD5E1 !important;
+  box-shadow: 0 2px 4px 0 rgba(15, 23, 42, 0.05) !important;
+}
+
+select:focus,
+select.input-clean:focus {
+  border-color: #5DCAA5 !important;
+  box-shadow: 0 0 0 3.5px rgba(93, 202, 165, 0.18) !important;
+  outline: none !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%231B4F72' stroke-width='2.25'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e") !important;
+}
+
+select:disabled,
+select.input-clean:disabled {
+  background-color: #F8FAFC !important;
+  border-color: #E2E8F0 !important;
+  color: #94A3B8 !important;
+  cursor: not-allowed !important;
+  opacity: 0.75 !important;
+}
+
+select option {
+  background-color: #ffffff !important;
+  color: #0F172A !important;
+  padding: 0.65rem 0.875rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+}
+
+select option:checked {
+  background-color: #F1F5F9 !important;
+  color: #1B4F72 !important;
+  font-weight: 600 !important;
+}
+
+select option[disabled] {
+  color: #94A3B8 !important;
+}
+
+/* Compact selects for DataTables & month selectors */
+.dataTables_length select,
+select.select-sm {
+  border-radius: 0.5rem !important;
+  padding: 0.35rem 2rem 0.35rem 0.65rem !important;
+  background-size: 1rem 1rem !important;
+  background-position: right 0.5rem center !important;
+  font-size: 0.8125rem !important;
+}
+
+.dataTables_wrapper .dataTables_length select {
+  border: 1px solid #CBD5E1 !important;
+  background-color: #FFFFFF !important;
+  color: #1E293B !important;
+  font-family: inherit !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+}
+
+.dataTables_wrapper .dataTables_length select:focus {
+  border-color: #5DCAA5 !important;
+  box-shadow: 0 0 0 3px rgba(93, 202, 165, 0.2) !important;
+  outline: none !important;
+}
+
+.dataTables_wrapper .dataTables_filter input {
+  border: 1px solid #CBD5E1 !important;
+  border-radius: 0.5rem !important;
+  padding: 0.35rem 0.75rem !important;
+  background-color: #FFFFFF !important;
+  font-size: 0.8125rem !important;
+  color: #1E293B !important;
+  font-family: inherit !important;
+}
+
+.dataTables_wrapper .dataTables_filter input:focus {
+  border-color: #5DCAA5 !important;
+  box-shadow: 0 0 0 3px rgba(93, 202, 165, 0.2) !important;
+  outline: none !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   PREMIUM MODERN DATE PICKER & INPUT DATE STYLING FLATPICKR
+   ───────────────────────────────────────────────────────────────────────────── */
+/* Native HTML5 Date Inputs fallback */
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"] {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-color: #ffffff !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 0.75rem !important;
+  color: #0F172A !important;
+  font-family: 'Work Sans', sans-serif !important;
+  font-weight: 500 !important;
+  padding: 0.625rem 0.875rem !important;
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.03) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+input[type="date"]:hover,
+input[type="datetime-local"]:hover {
+  border-color: #CBD5E1 !important;
+}
+
+input[type="date"]:focus,
+input[type="datetime-local"]:focus {
+  border-color: #5DCAA5 !important;
+  box-shadow: 0 0 0 3.5px rgba(93, 202, 165, 0.18) !important;
+  outline: none !important;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer !important;
+  border-radius: 6px !important;
+  padding: 4px !important;
+  opacity: 0.65 !important;
+  transition: all 0.15s ease !important;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1 !important;
+  background-color: rgba(93, 202, 165, 0.15) !important;
+}
+
+/* Flatpickr Alternative Input (the text field user clicks on) */
+input.flatpickr-input,
+.datepicker-tx,
+.datepicker-report {
+  cursor: pointer !important;
+  font-weight: 500 !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease !important;
+}
+
+input.flatpickr-input:hover,
+.datepicker-tx:hover,
+.datepicker-report:hover {
+  border-color: #CBD5E1 !important;
+}
+
+input.flatpickr-input:focus,
+input.flatpickr-input.active,
+.datepicker-tx:focus,
+.datepicker-report:focus {
+  border-color: #5DCAA5 !important;
+  box-shadow: 0 0 0 3.5px rgba(93, 202, 165, 0.18) !important;
+  outline: none !important;
+}
+
+.flatpickr-calendar .flatpickr-current-month .flatpickr-monthDropdown-months {
+    color: #f6f8fc !important; /* slate-800 */
+    background-color: transparent !important;
+    font-weight: 600 !important;
+}
+
+/* Pastikan daftar opsi (dropdown list) saat diklik memiliki background putih dan teks gelap */
+.flatpickr-calendar .flatpickr-current-month .flatpickr-monthDropdown-months option {
+    color: #1e293b !important; /* slate-800 */
+    background-color: #ffffff !important;
+}
+
+.flatpickr-calendar .flatpickr-current-month .flatpickr-monthDropdown-months {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+}
+
+/* Hilangkan juga outline / border saat dropdown sedang diklik atau fokus */
+.flatpickr-calendar .flatpickr-current-month .flatpickr-monthDropdown-months:focus {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Mengubah warna background header kalender */
+.flatpickr-calendar .flatpickr-months {
+    background-color: #1B4F72 !important; /* Ganti dengan warna yang diinginkan, misal: Indigo (#4f46e5) atau Emerald (#059669) */
+    border-top-left-radius: 0.75rem !important;
+    border-top-right-radius: 0.75rem !important;
+}
+
+/* Pastikan area nama bulan & tahun menyatu dengan warna header baru */
+.flatpickr-calendar .flatpickr-current-month {
+    background-color: transparent !important;
+    color: #FFFFFF;
+}
+
+.flatpickr-weekdaycontainer .flatpickr-weekday{
+    color: #ffffff !important;
+    background-color: #1B4F72 !important;
+    padding: 8px 0 !important;
+}
+
+/* Mengubah warna latar tombol panah navigasi bulan (sebelumnya/berikutnya) */
+.flatpickr-calendar .flatpickr-months .flatpickr-prev-month,
+.flatpickr-calendar .flatpickr-months .flatpickr-next-month {
+    background-color: transparent !important;
+    color: #FFFFFF;
+}
+
+/* Warna ikon panah navigasi */
+.flatpickr-calendar .flatpickr-months .flatpickr-prev-month svg,
+.flatpickr-calendar .flatpickr-months .flatpickr-next-month svg {
+    fill: #ffffff !important;
+}
+
+/* Sembunyikan tombol panah naik/turun bawaan Flatpickr */
+.flatpickr-current-month .numInputWrapper span.arrowUp,
+.flatpickr-current-month .numInputWrapper span.arrowDown {
+    display: none !important;
+}
+
+/* Hilangkan spinner bawaan browser pada input number */
+.flatpickr-current-month input.cur-year::-webkit-inner-spin-button,
+.flatpickr-current-month input.cur-year::-webkit-outer-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+}
+
+.flatpickr-current-month input.cur-year {
+    -moz-appearance: textfield !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #ffffff !important; /* Sesuaikan dengan warna teks header */
+    cursor: pointer;
+}
+
+.flatpickr-calendar .flatpickr-day.selected {
+    background-color: #1B4F72 !important;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SEMANTIC UI DROPDOWN - MYCASH DESIGN SYSTEM INTEGRATION
+   ───────────────────────────────────────────────────────────────────────────── */
+.ui.selection.dropdown,
+.ui.dropdown {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+  min-height: 42px !important;
+  padding: 0.625rem 2.5rem 0.625rem 0.875rem !important;
+  background: #ffffff !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 0.75rem !important;
+  color: #0F172A !important;
+  font-family: 'Work Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.03) !important;
+  cursor: pointer !important;
+  outline: none !important;
+  line-height: 1.4 !important;
+  transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.ui.selection.dropdown:hover,
+.ui.dropdown:hover {
+  border-color: #CBD5E1 !important;
+  box-shadow: 0 2px 4px 0 rgba(15, 23, 42, 0.05) !important;
+}
+
+.ui.selection.dropdown:focus,
+.ui.selection.active.dropdown,
+.ui.dropdown.active,
+.ui.dropdown:focus {
+  border-color: #1B4F72 !important;
+  box-shadow: 0 0 0 3.5px rgba(19, 60, 86, 0.18) !important;
+}
+
+
+/* Material Symbols Dropdown Chevron Icon */
+.ui.dropdown > .dropdown.icon {
+  font-family: 'Material Symbols Outlined' !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  font-size: 1.25rem !important;
+  position: absolute !important;
+  right: 0.875rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: #64748B !important;
+  pointer-events: none !important;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  z-index: 4 !important;
+}
+
+.ui.dropdown > .dropdown.icon:before {
+  content: 'expand_more' !important;
+}
+
+.ui.dropdown.active > .dropdown.icon {
+  transform: translateY(-50%) rotate(180deg) !important;
+  color: #1B4F72 !important;
+}
+
+/* Dropdown Menu (Floating list) */
+.ui.dropdown .menu {
+  background: #ffffff !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 0.875rem !important;
+  box-shadow: 0 16px 36px -6px rgba(27, 79, 114, 0.2), 0 4px 12px rgba(0, 0, 0, 0.06) !important;
+  padding: 0.35rem !important;
+  margin-top: 6px !important;
+  z-index: 100 !important;
+  max-height: 260px !important;
+  overflow-y: auto !important;
+  min-width: 100% !important;
+}
+
+.ui.dropdown .menu > .item {
+  color: #1E293B !important;
+  font-family: 'Work Sans', sans-serif !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  padding: 0.625rem 0.875rem !important;
+  border-radius: 0.5rem !important;
+  border: none !important;
+  border-top: none !important;
+  transition: all 0.15s ease !important;
+  white-space: normal !important;
+  line-height: 1.35 !important;
+}
+
+.ui.dropdown .menu > .item:hover {
+  background: #F1F5F9 !important;
+  color: #1B4F72 !important;
+}
+
+.ui.dropdown .menu > .item.selected {
+  background: #F8FAFC !important;
+  color: #1B4F72 !important;
+  font-weight: 600 !important;
+}
+
+.ui.dropdown .menu > .item.active {
+  background: rgba(27, 79, 114, 0.12) !important;
+  color: #1B4F72 !important;
+  font-weight: 700 !important;
+}
+
+.ui.dropdown .menu > .item.active:hover,
+.ui.dropdown .menu > .item.active.selected {
+  background: rgba(27, 79, 114, 0.18) !important;
+  color: #1B4F72 !important;
+}
+
+/* Selected text & placeholder */
+.ui.dropdown > .text {
+  font-family: 'Work Sans', sans-serif !important;
+  color: #0F172A !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  line-height: inherit !important;
+  display: block !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.ui.dropdown > .default.text {
+  color: #94A3B8 !important;
+  font-weight: 400 !important;
+}
+
+/* Search input inside searchable dropdown */
+.ui.search.selection.dropdown {
+  cursor: text !important;
+}
+
+.ui.search.selection.dropdown > input.search {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0.625rem 2.5rem 0.625rem 0.875rem !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: #0F172A !important;
+  font-family: 'Work Sans', sans-serif !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  line-height: inherit !important;
+  z-index: 2 !important;
+}
+
+.ui.search.selection.dropdown > .text {
+  position: relative !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+}
+
+.ui.search.selection.dropdown.active > .text,
+.ui.search.selection.dropdown.visible > .text {
+  opacity: 0.35 !important;
+}
+
+.ui.search.selection.dropdown.filtered > .text {
+  visibility: hidden !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   PREMIUM SWEETALERT2 DESIGN SYSTEM - MYCASH THEME
+   ───────────────────────────────────────────────────────────────────────────── */
+/* Backdrop with subtle modern blur */
+.swal2-container.swal2-backdrop-show,
+.swal2-container.swal2-noanimation {
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(5px) !important;
+  -webkit-backdrop-filter: blur(5px) !important;
+}
+
+/* Modal Popup Card */
+.swal2-popup {
+  background: #ffffff !important;
+  border-radius: 1.25rem !important; /* 20px */
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.03) !important;
+  padding: 1.75rem 1.5rem !important;
+  font-family: 'Work Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+/* Modal Title */
+.swal2-title {
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-weight: 800 !important;
+  font-size: 1.25rem !important;
+  color: #0F172A !important;
+  letter-spacing: -0.02em !important;
+  padding: 0.5rem 1rem 0 !important;
+  line-height: 1.35 !important;
+}
+
+/* Modal Description / HTML */
+.swal2-html-container {
+  font-family: 'Work Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size: 0.875rem !important;
+  color: #64748B !important;
+  line-height: 1.6 !important;
+  margin-top: 0.625rem !important;
+  padding: 0 0.5rem !important;
+}
+
+/* Icons (Modern Clean Borders & Soft Ambient Tint) */
+.swal2-icon {
+  margin: 0.75rem auto 0.5rem !important;
+  transform: scale(0.9) !important;
+  box-sizing: border-box !important;
+}
+
+.swal2-icon.swal2-warning {
+  border-color: #F59E0B !important;
+  color: #D97706 !important;
+  background-color: rgba(245, 158, 11, 0.08) !important;
+}
+
+.swal2-icon.swal2-success {
+  border-color: #10B981 !important;
+  color: #059669 !important;
+  background-color: rgba(16, 185, 129, 0.08) !important;
+}
+.swal2-icon.swal2-success .swal2-success-ring {
+  border-color: rgba(16, 185, 129, 0.25) !important;
+}
+.swal2-icon.swal2-success [class^='swal2-success-line'] {
+  background-color: #059669 !important;
+}
+
+.swal2-icon.swal2-error {
+  border-color: #F43F5E !important;
+  color: #E11D48 !important;
+  background-color: rgba(244, 63, 94, 0.08) !important;
+}
+.swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
+  background-color: #E11D48 !important;
+}
+
+.swal2-icon.swal2-info,
+.swal2-icon.swal2-question {
+  border-color: #1B4F72 !important;
+  color: #1B4F72 !important;
+  background-color: rgba(27, 79, 114, 0.08) !important;
+}
+
+/* Action Buttons Container */
+.swal2-actions {
+  gap: 0.75rem !important;
+  margin-top: 1.5rem !important;
+  width: 100% !important;
+  justify-content: center !important;
+}
+
+/* Button Base Styles */
+.swal2-styled {
+  font-family: 'Work Sans', sans-serif !important;
+  font-weight: 600 !important;
+  font-size: 0.8125rem !important;
+  letter-spacing: 0.01em !important;
+  border-radius: 0.75rem !important; /* 12px */
+  padding: 0.65rem 1.35rem !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+  margin: 0 !important;
+  align-items: center;
+  justify-content: center;
+  outline: none !important;
+}
+
+.swal2-actions button[style*="display: none"],
+.swal2-styled[style*="display: none"] {
+  display: none !important;
+}
+
+.swal2-styled:hover {
+  transform: translateY(-1px) !important;
+}
+
+.swal2-styled:active {
+  transform: translateY(0) scale(0.98) !important;
+}
+
+.swal2-styled.swal2-confirm {
+  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.18) !important;
+}
+
+.swal2-styled.swal2-confirm:hover {
+  filter: brightness(0.93) !important;
+  box-shadow: 0 6px 16px -2px rgba(15, 23, 42, 0.22) !important;
+}
+
+.swal2-styled.swal2-cancel {
+  background-color: #F1F5F9 !important;
+  color: #475569 !important;
+  border: 1px solid #E2E8F0 !important;
+}
+
+.swal2-styled.swal2-cancel:hover {
+  background-color: #E2E8F0 !important;
+  color: #1E293B !important;
+}
+
+/* Textarea & Input Inside SweetAlert */
+.swal2-textarea,
+.swal2-input {
+  border-radius: 0.75rem !important;
+  border: 1px solid #CBD5E1 !important;
+  font-family: 'Work Sans', sans-serif !important;
+  font-size: 0.875rem !important;
+  color: #1E293B !important;
+  padding: 0.75rem 1rem !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04) !important;
+  transition: all 0.2s ease !important;
+}
+
+.swal2-textarea:focus,
+.swal2-input:focus {
+  border-color: #1B4F72 !important;
+  box-shadow: 0 0 0 3.5px rgba(27, 79, 114, 0.15) !important;
+  outline: none !important;
+}
+
+.swal2-textarea::placeholder,
+.swal2-input::placeholder {
+  color: #94A3B8 !important;
+  font-size: 0.8125rem !important;
+}
+
+/* SweetAlert Toast Notifications */
+.swal2-popup.swal2-toast {
+  background: #ffffff !important;
+  border-radius: 0.875rem !important; /* 14px */
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  box-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.15), 0 4px 10px -2px rgba(15, 23, 42, 0.05) !important;
+  padding: 0.75rem 1rem !important;
+}
+
+.swal2-popup.swal2-toast .swal2-title {
+  font-family: 'Work Sans', sans-serif !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  color: #0F172A !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.swal2-popup.swal2-toast .swal2-icon {
+  margin: 0 0.5rem 0 0 !important;
+  transform: scale(0.75) !important;
+}
+
+
 
 

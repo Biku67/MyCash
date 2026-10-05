@@ -29,14 +29,14 @@
         <!-- Kelas Yang Diampu -->
         <div class="card p-5 border border-slate-200/80 rounded-2xl shadow-sm flex flex-col justify-between">
             <div class="flex items-center justify-between">
-                <p class="text-xs font-medium text-slate-500">Kelas yang Diampu</p>
+                <p class="text-xs font-medium text-slate-500">Kelas yang Ditangani</p>
                 <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
                     <span class="material-symbols-outlined text-xl">school</span>
                 </div>
             </div>
             <div class="mt-3">
                 <h3 class="text-2xl font-extrabold text-slate-900 font-heading">{{ $kelasListWithStats->count() }} Kelas</h3>
-                <p class="text-[11px] text-slate-400 mt-0.5">Kelas aktif binaan Anda</p>
+                <p class="text-[11px] text-slate-400 mt-0.5">Kelas aktif yang ditangani</p>
             </div>
         </div>
 
@@ -69,100 +69,7 @@
                 <p class="text-[11px] text-slate-400 mt-0.5">Akumulasi kas seluruh kelas</p>
             </div>
         </div>
-
-        <!-- Tingkat Partisipasi Iuran -->
-        {{-- <div class="card p-5 border border-gray-100 hover:border-emerald-200 transition-all flex flex-col justify-between">
-            <div class="flex items-center justify-between">
-                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Kelunasan Iuran</p>
-                <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                    <span class="material-symbols-outlined text-xl">task_alt</span>
-                </div>
-            </div>
-            <div class="mt-3">
-                <div class="flex items-baseline justify-between">
-                    <h3 class="text-2xl font-extrabold text-navy font-heading">{{ $complianceRate }}%</h3>
-                    <span class="text-xs text-gray-500 font-medium">{{ $siswaPaidCount }}/{{ $totalSiswa }} Siswa</span>
-                </div>
-                <!-- Progress Bar -->
-                <div class="w-full bg-gray-100 rounded-full h-2 mt-2 overflow-hidden">
-                    <div class="bg-teal-accent h-2 rounded-full transition-all duration-500" style="width: {{ $complianceRate }}%"></div>
-                </div>
-            </div>
-        </div> --}}
     </div>
-
-    <!-- Main Section: Kelas Binaan List & Status Kelunasan Donut Chart -->
-    {{-- <div class="flex flex-col lg:flex-row gap-6">
-        <!-- Daftar Kelas Binaan Cards (7 Cols) -->
-        <div class="w-full lg:w-7/12 card p-5 sm:p-6 border border-gray-100 shadow-sm flex flex-col justify-between">
-            <div class="flex items-center justify-between mb-4">
-                <div>
-                    <h3 class="text-base font-bold text-navy" style="font-family:'Manrope',sans-serif;">Kelas yang Anda Ampu</h3>
-                    <p class="text-xs text-gray-400 mt-0.5">Rincian status kas dan bendahara di masing-masing kelas.</p>
-                </div>
-            </div>
-
-            @if($kelasListWithStats->count() > 0)
-                <div class="space-y-3.5">
-                    @foreach($kelasListWithStats as $kelas)
-                        <div class="p-4 rounded-xl border border-gray-100 bg-white hover:border-teal-accent/50 hover:shadow-sm transition-all flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                            <div class="space-y-1">
-                                <div class="flex items-center gap-2">
-                                    <span class="px-2 py-0.5 rounded bg-navy/10 text-navy font-mono font-bold text-xs uppercase">{{ $kelas->kode_kelas }}</span>
-                                    <h4 class="font-bold text-gray-900 text-sm sm:text-base">{{ $kelas->nama_kelas }}</h4>
-                                    <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700">
-                                        {{ $kelas->total_siswa }} Siswa
-                                    </span>
-                                </div>
-                                <p class="text-xs text-gray-500">
-                                    Bendahara: <strong>{{ $kelas->bendahara->count() > 0 ? $kelas->bendahara->pluck('nama')->implode(', ') : 'Belum ditugaskan' }}</strong>
-                                </p>
-                                <p class="text-xs text-gray-400">
-                                    Iuran Standar: Rp {{ number_format($kelas->nominal_standar, 0, ',', '.') }} / {{ $kelas->tipe_periode }}
-                                </p>
-                            </div>
-                            <div class="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-2 sm:pt-0 border-gray-100">
-                                <p class="text-[11px] text-gray-400 uppercase tracking-wider">Saldo Kas Kelas</p>
-                                <p class="text-base sm:text-lg font-bold font-mono text-emerald-600">
-                                    Rp {{ number_format($kelas->saldo_kas, 0, ',', '.') }}
-                                </p>
-                                <a href="{{ route('wali-kelas.students.index') }}" class="mt-1.5 text-xs font-semibold text-navy hover:text-teal-accent inline-flex items-center gap-1">
-                                    <span>Lihat Siswa</span>
-                                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
-                                </a>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            @else
-                <div class="text-center py-10 text-gray-400 text-xs sm:text-sm">
-                    <span class="material-symbols-outlined text-4xl text-gray-300 mb-2">school</span>
-                    <p>Anda belum memiliki kelas yang diampu.</p>
-                    <p class="text-gray-400 mt-1">Silakan hubungi admin untuk pengaturan kelas Anda.</p>
-                </div>
-            @endif
-        </div>
-
-        <!-- Donut Chart & Monitoring Alert (5 Cols) -->
-        <div class="w-full lg:w-5/12 card p-5 sm:p-6 border border-gray-100 shadow-sm flex flex-col justify-between">
-            <div class="mb-4">
-                <h3 class="text-base font-bold text-navy" style="font-family:'Manrope',sans-serif;">Status Partisipasi Iuran Kas</h3>
-                <p class="text-xs text-gray-400 mt-0.5">Proporsi siswa yang telah berpartisipasi dan menunggak.</p>
-            </div>
-
-            <div id="waliComplianceChart" class="w-full h-56 flex items-center justify-center"></div>
-
-            <div class="mt-4 p-3.5 rounded-xl bg-blue-50/80 border border-blue-100 flex items-start gap-2.5">
-                <span class="material-symbols-outlined text-blue-600 text-lg flex-shrink-0 mt-0.5">info</span>
-                <div>
-                    <h5 class="text-xs font-bold text-blue-900">Peran Pengawasan Wali Kelas</h5>
-                    <p class="text-[11px] text-blue-700 mt-0.5 leading-relaxed">
-                        Anda dapat memantau kedisiplinan iuran kas siswa secara berkala dan berkoordinasi dengan Bendahara kelas apabila terdapat tunggakan.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div> --}}
 
     <!-- Recent Homeroom Transactions Table -->
     <div class="card p-5 sm:p-6 border border-slate-200/80 rounded-2xl shadow-sm">
@@ -275,63 +182,5 @@
         }
     }
 </style>
-@endpush
-
-@push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const paidCount = {{ $siswaPaidCount }};
-        const unpaidCount = {{ $siswaUnpaidCount }};
-
-        const chartEl = document.querySelector("#waliComplianceChart");
-        if (chartEl && (paidCount > 0 || unpaidCount > 0)) {
-            const options = {
-                series: [paidCount, unpaidCount],
-                labels: ['Sudah Bayar', 'Belum / Menunggak'],
-                chart: {
-                    type: 'donut',
-                    height: 220,
-                    fontFamily: 'Work Sans, sans-serif'
-                },
-                colors: ['#5DCAA5', '#F43F5E'],
-                legend: {
-                    position: 'bottom',
-                    fontSize: '11px',
-                    fontFamily: 'Work Sans',
-                    labels: { colors: '#64748B' }
-                },
-                dataLabels: {
-                    enabled: true,
-                    formatter: function(val) {
-                        return val.toFixed(0) + "%";
-                    }
-                },
-                plotOptions: {
-                    pie: {
-                        donut: {
-                            size: '65%',
-                            labels: {
-                                show: true,
-                                total: {
-                                    show: true,
-                                    label: 'Total Siswa',
-                                    fontSize: '11px',
-                                    color: '#64748B',
-                                    formatter: function(w) {
-                                        return {{ $totalSiswa }} + ' Anak';
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            };
-            const chart = new ApexCharts(chartEl, options);
-            chart.render();
-        } else if (chartEl) {
-            chartEl.innerHTML = '<p class="text-xs text-gray-400 py-8">Belum ada data siswa.</p>';
-        }
-    });
-</script>
 @endpush
 </x-app-layout>

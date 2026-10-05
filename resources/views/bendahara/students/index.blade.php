@@ -35,24 +35,6 @@
         </div>
         
         <div class="flex flex-wrap items-center gap-2.5">
-            <!-- Tahun Ajaran Filter Pill -->
-            <form method="GET" action="{{ route('bendahara.students.index') }}" class="inline-flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
-                <span class="material-symbols-outlined text-slate-500 text-base ml-1">school</span>
-                <select name="tahun_ajaran" onchange="this.form.submit()" class="bg-transparent text-xs font-bold text-slate-700 outline-none pr-2 cursor-pointer">
-                    @foreach($tahunAjaranList as $ta)
-                        <option value="{{ $ta }}" {{ $selectedTahunAjaran === $ta ? 'selected' : '' }}>TA {{ $ta }} {{ ($kelas->tahun_ajaran ?? '2025/2026') === $ta ? '(Aktif)' : '' }}</option>
-                    @endforeach
-                </select>
-            </form>
-
-            <!-- Export Buttons with current TA -->
-            <a href="{{ route('bendahara.students.export', ['tahun_ajaran' => $selectedTahunAjaran]) }}" class="py-2.5 px-3 text-xs inline-flex items-center gap-1.5 bg-white text-emerald-700 border border-slate-200 hover:bg-emerald-50 rounded-xl font-semibold transition-all">
-                <span class="material-symbols-outlined text-base">file_download</span> Excel
-            </a>
-            <a href="{{ route('bendahara.students.exportPdf', ['tahun_ajaran' => $selectedTahunAjaran]) }}" class="py-2.5 px-3 text-xs inline-flex items-center gap-1.5 bg-white text-rose-700 border border-slate-200 hover:bg-rose-50 rounded-xl font-semibold transition-all">
-                <span class="material-symbols-outlined text-base">picture_as_pdf</span> PDF
-            </a>
-
             <!-- Settings Modal Trigger -->
             <button id="tour-bendahara-btn-settings" @click="openSettings = true" class="py-2.5 px-4 text-xs sm:text-sm inline-flex items-center justify-center gap-2 bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-xl font-semibold transition-all">
                 <span class="material-symbols-outlined text-base">tune</span>
@@ -67,9 +49,7 @@
             <div>
                 <p class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Ketentuan Iuran</p>
                 <p class="text-sm font-bold text-slate-800 font-heading mt-0.5">
-                    TA: <span class="text-teal-700 font-bold bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-md text-xs">{{ $selectedTahunAjaran }}</span>
-                    <span class="text-slate-300 mx-1.5">&bull;</span>
-                    Periode: <span class="text-navy font-semibold">{{ $feePeriodType === 'mingguan' ? 'Mingguan (M1 - M24)' : 'Bulanan (' . ($kelas->bulan_mulai ?? 'Jul') . ' - ' . ($kelas->bulan_selesai ?? 'Jun') . ' · ' . count($periods) . ' Bulan)' }}</span> 
+                    Periode: <span class="text-navy font-semibold">{{ $feePeriodType === 'mingguan' ? 'Mingguan (M1 - M24)' : ($kelas->bulan_mulai ?? 'Jan') . ' - ' . ($kelas->bulan_selesai ?? 'Des') . ' · ' . count($periods) . ' Bulan' }}</span> 
                     <span class="text-slate-300 mx-1.5">&bull;</span> 
                     Nominal Standar: <span class="text-emerald-600 font-bold">Rp {{ number_format($feeAmount, 0, ',', '.') }}</span>
                 </p>
@@ -161,15 +141,13 @@
                     <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.375rem;">
                         @foreach($periods as $period)
                             @php
-                                $pKey = $period['key'];
-                                $pLabel = $period['label'];
-                                $isPaid = in_array($pKey, $student->paid_periods);
-                                $partialPaid = $student->partial_periods[$pKey] ?? 0;
+                                $isPaid = in_array($period, $student->paid_periods);
+                                $partialPaid = $student->partial_periods[$period] ?? 0;
                             @endphp
                             <div class="flex items-center justify-between px-2 py-1.5 rounded-lg border select-none {{ $isPaid ? 'bg-emerald-50/90 text-emerald-800 border-emerald-300/80 shadow-xs' : ($partialPaid > 0 ? 'bg-amber-50/90 text-amber-800 border-amber-300/80' : 'bg-gray-50/80 text-gray-400 border-gray-200/60') }}"
-                                 title="{{ $pLabel }}: {{ $isPaid ? 'Lunas' : ($partialPaid > 0 ? 'Dicicil Rp ' . number_format($partialPaid, 0, ',', '.') : 'Belum Bayar') }}">
+                                 title="{{ $period }}: {{ $isPaid ? 'Lunas' : ($partialPaid > 0 ? 'Dicicil Rp ' . number_format($partialPaid, 0, ',', '.') : 'Belum Bayar') }}">
                                 <div class="min-w-0 pr-1">
-                                    <span class="text-[10px] font-bold block leading-none truncate {{ $isPaid ? 'text-emerald-900' : ($partialPaid > 0 ? 'text-amber-900' : 'text-gray-500') }}">{{ $pLabel }}</span>
+                                    <span class="text-[10px] font-bold block leading-none truncate {{ $isPaid ? 'text-emerald-900' : ($partialPaid > 0 ? 'text-amber-900' : 'text-gray-500') }}">{{ $period }}</span>
                                     @if(!$isPaid && $partialPaid > 0)
                                         <span class="partial-badge text-[7px] font-semibold text-amber-700 block leading-none truncate mt-0.5">
                                             {{ $partialPaid >= 1000 ? round($partialPaid/1000, 1) . 'k' : $partialPaid }}
@@ -209,7 +187,7 @@
                         <th class="min-w-[70px] !py-2.5 !px-1.5 font-bold text-[11px] uppercase tracking-wider">NIS</th>
                         @foreach($periods as $period)
                             <th @if($loop->first) id="tour-bendahara-col-periods" @endif class="text-center min-w-[36px] lg:min-w-[42px] !px-0.5 !py-2 font-bold text-[10px] uppercase tracking-wider">
-                                <span class="block leading-tight text-slate-700 font-extrabold">{{ $period['label'] }}</span>
+                                <span class="block leading-tight text-slate-700 font-extrabold">{{ $period }}</span>
                             </th>
                         @endforeach
                         <th id="tour-bendahara-col-paid" class="min-w-[95px] !py-2.5 !px-2 text-right font-bold text-[11px] uppercase tracking-wider">Total Dibayar</th>
@@ -234,24 +212,22 @@
                             <td class="font-mono text-xs text-gray-600 !py-2 !px-1.5">{{ $student->nis ?? '-' }}</td>
                             @foreach($periods as $period)
                                 @php
-                                    $pKey = $period['key'];
-                                    $pLabel = $period['label'];
-                                    $isPaid = in_array($pKey, $student->paid_periods);
-                                    $partialPaid = $student->partial_periods[$pKey] ?? 0;
+                                    $isPaid = in_array($period, $student->paid_periods);
+                                    $partialPaid = $student->partial_periods[$period] ?? 0;
                                 @endphp
                                 <td class="text-center align-middle !px-0.5 !py-1.5 transition-colors duration-150 {{ $isPaid ? 'bg-emerald-50/50' : ($partialPaid > 0 ? 'bg-amber-50/60' : 'bg-transparent') }}">
                                     <div class="inline-flex flex-col items-center justify-center">
                                         @if($isPaid)
                                             <span class="inline-flex items-center justify-center w-5 h-5 rounded-md bg-emerald-100/90 text-emerald-700 font-bold text-xs shadow-2xs" 
-                                                  title="{{ $student->nama }} - {{ $pLabel }}: Lunas">✓</span>
+                                                  title="{{ $student->nama }} - {{ $period }}: Lunas">✓</span>
                                         @elseif($partialPaid > 0)
                                             <span class="partial-badge inline-flex items-center justify-center px-1 h-5 rounded-md bg-amber-100 text-amber-800 font-bold text-[9px]" 
-                                                  title="{{ $student->nama }} - {{ $pLabel }}: Dicicil Rp {{ number_format($partialPaid, 0, ',', '.') }}">
+                                                  title="{{ $student->nama }} - {{ $period }}: Dicicil Rp {{ number_format($partialPaid, 0, ',', '.') }}">
                                                 {{ $partialPaid >= 1000 ? round($partialPaid/1000, 1) . 'k' : $partialPaid }}
                                             </span>
                                         @else
                                             <span class="inline-flex items-center justify-center w-5 h-5 rounded-md text-gray-300 font-bold text-xs select-none" 
-                                                  title="{{ $student->nama }} - {{ $pLabel }}: Belum Bayar">-</span>
+                                                  title="{{ $student->nama }} - {{ $period }}: Belum Bayar">-</span>
                                         @endif
                                     </div>
                                 </td>
@@ -329,20 +305,8 @@
                 <form method="POST" action="{{ route('bendahara.students.updateFeeSettings') }}" class="space-y-4">
                     @csrf
                     <div>
-                        <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Tahun Ajaran Aktif</label>
-                        <select name="tahun_ajaran" class="input-clean w-full px-3 py-2.5 text-sm font-bold text-navy">
-                            @foreach($tahunAjaranList as $ta)
-                                <option value="{{ $ta }}" {{ ($kelas->tahun_ajaran ?? '2025/2026') === $ta ? 'selected' : '' }}>
-                                    Tahun Ajaran {{ $ta }} {{ ($kelas->tahun_ajaran ?? '2025/2026') === $ta ? '(Aktif)' : '' }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <p class="text-[11px] text-gray-400 mt-1">Mengubah tahun ajaran aktif akan menentukan lembar buku kas dan tagihan kelas saat ini.</p>
-                    </div>
-
-                    <div>
                         <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Tipe Periode Pembayaran</label>
-                        <select name="fee_period_type" x-model="periodType" class="input-clean w-full px-3 py-2.5 text-sm">
+                        <select name="fee_period_type" x-model="periodType" class="ui selection dropdown input-clean w-full text-sm">
                             <option value="bulanan">Bulanan</option>
                             <option value="mingguan">Mingguan (M1 - M24)</option>
                         </select>
@@ -361,7 +325,7 @@
                         <div class="grid grid-cols-2 gap-2.5">
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Bulan Mulai</label>
-                                <select name="start_month" x-model="startMonth" class="input-clean w-full px-2.5 py-2 text-xs font-semibold">
+                                <select name="start_month" x-model="startMonth" class="ui selection dropdown input-clean w-full text-xs font-semibold">
                                     @foreach($monthList as $kMonth => $labelMonth)
                                         <option value="{{ $kMonth }}">{{ $kMonth }} ({{ $labelMonth }})</option>
                                     @endforeach
@@ -369,7 +333,7 @@
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Bulan Selesai</label>
-                                <select name="end_month" x-model="endMonth" class="input-clean w-full px-2.5 py-2 text-xs font-semibold">
+                                <select name="end_month" x-model="endMonth" class="ui selection dropdown input-clean w-full text-xs font-semibold">
                                     @foreach($monthList as $kMonth => $labelMonth)
                                         <option value="{{ $kMonth }}">{{ $kMonth }} ({{ $labelMonth }})</option>
                                     @endforeach
@@ -377,7 +341,7 @@
                             </div>
                         </div>
                         <p class="text-[10px] text-slate-400 leading-relaxed">
-                            Mendukung rentang dalam tahun yang sama (cth: Jul - Des = 6 bulan) maupun lintas tahun ajaran (cth: Jul - Jun = 12 bulan).
+                            Mendukung rentang dalam tahun yang sama (cth: Jul - Des = 6 bulan) maupun lintas tahun (cth: Jul - Jun = 12 bulan).
                         </p>
                     </div>
 
@@ -414,30 +378,8 @@
                     </div>
                 </form>
 
-                <!-- Section Separate: Tutup Buku & Buka Tahun Ajaran Baru -->
-                <div class="mt-6 pt-4 border-t border-indigo-100 bg-indigo-50/50 p-3.5 rounded-xl border">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div>
-                            <span class="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
-                                <span class="material-symbols-outlined text-base text-indigo-600">account_balance_wallet</span>
-                                Tutup Buku & Buka Tahun Ajaran Baru
-                            </span>
-                            <p class="text-[11px] text-indigo-700/90 mt-0.5 leading-relaxed">
-                                Pindahkan sisa saldo kas fisik saat ini menjadi <b>Saldo Awal</b> ke Tahun Ajaran berikutnya. Tunggakan siswa tahun ini tetap tersimpan aman di riwayat TA lama.
-                            </p>
-                        </div>
-                        <form method="POST" action="{{ route('bendahara.students.tutupBuku') }}" onsubmit="return confirm('Apakah Anda yakin ingin melakukan Tutup Buku? Sisa saldo fisik kas akan otomatis dipindahkan sebagai Saldo Awal ke Tahun Ajaran baru.');" class="flex-shrink-0">
-                            @csrf
-                            <button type="submit" class="w-full sm:w-auto px-3.5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-sm transition-colors flex items-center justify-center gap-1.5">
-                                <span class="material-symbols-outlined text-sm">lock_clock</span>
-                                <span>Tutup Buku & Rollover</span>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
                 <!-- Section Separate: Reset Matriks Checklist -->
-                <div class="mt-4 pt-4 border-t border-rose-100 bg-rose-50/50 p-3.5 rounded-xl border">
+                <div class="mt-6 pt-4 border-t border-rose-100 bg-rose-50/50 p-3.5 rounded-xl border">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
                             <span class="text-xs font-bold text-rose-800 flex items-center gap-1.5">
@@ -448,7 +390,7 @@
                                 Kosongkan centang checklist matriks kas siswa. Catatan transaksi dan riwayat laporan keuangan tetap tersimpan utuh.
                             </p>
                         </div>
-                        <form method="POST" action="{{ route('bendahara.students.resetMatrix') }}" onsubmit="return confirm('Apakah Anda yakin ingin me-reset centang checklist kas untuk memulai periode baru? Catatan keuangan tetap aman tersimpan.');" class="flex-shrink-0">
+                        <form method="POST" action="{{ route('bendahara.students.resetMatrix') }}" onsubmit="return swalConfirm(event, 'Reset Matriks Checklist Kas?', 'Apakah Anda yakin ingin me-reset centang checklist kas untuk memulai periode baru? Catatan transaksi dan riwayat laporan keuangan tetap tersimpan utuh.')" class="flex-shrink-0">
                             @csrf
                             <button type="submit" class="w-full sm:w-auto px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold shadow-sm transition-colors flex items-center justify-center gap-1.5">
                                 <span class="material-symbols-outlined text-sm">restart_alt</span>

@@ -8,7 +8,6 @@ use App\Models\Kategori;
 use App\Models\Kelas;
 use App\Models\Siswa;
 use App\Exports\BendaharaReportExport;
-use App\Exports\BendaharaStudentExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -36,13 +35,11 @@ class ReportController extends Controller
     public function index(Request $request)
     {
         $request->validate([
-            'tab'        => 'nullable|in:buku_kas,tunggakan',
             'kode_kelas' => 'nullable|string',
             'start_date' => 'nullable|date_format:Y-m-d',
             'end_date'   => 'nullable|date_format:Y-m-d|after_or_equal:start_date',
             'category_id'=> 'nullable|exists:kategori,id',
             'type'       => 'nullable|in:all,pemasukan,pengeluaran',
-            'tahun_ajaran' => 'nullable|string|max:15',
         ]);
 
         $waliKelas = $this->getWaliKelas();
@@ -52,7 +49,6 @@ class ReportController extends Controller
             return view('wali-kelas.reports.index', [
                 'kelasList' => collect(),
                 'kelas' => null,
-                'activeTab' => 'buku_kas',
                 'transactions' => collect(),
                 'saldoAwal' => 0,
                 'totalIncome' => 0,
@@ -68,26 +64,12 @@ class ReportController extends Controller
                 'type' => 'all',
                 'categories' => collect(),
                 'selectedKodeKelas' => null,
-                'tahunAjaranList' => [],
-                'selectedTahunAjaran' => '2025/2026',
-                'periods' => [],
-                'feeAmount' => 0,
-                'studentsArrears' => collect(),
-                'totalSiswa' => 0,
-                'totalTargetKas' => 0,
-                'totalKasTerkumpul' => 0,
-                'totalSisaTunggakan' => 0,
-                'persentaseLunas' => 0,
-                'countLunas' => 0,
-                'countSebagian' => 0,
-                'countBelum' => 0,
             ]);
         }
 
         $selectedKodeKelas = $request->input('kode_kelas', $kelasList->first()->kode_kelas);
         $kelas = $kelasList->where('kode_kelas', $selectedKodeKelas)->first() ?? $kelasList->first();
         $kodeKelas = $kelas->kode_kelas;
-        $activeTab = $request->input('tab', 'buku_kas');
 
         // Date Filtering (Default: awal tahun s.d. hari ini)
         $startDate = $request->input('start_date', now()->startOfYear()->format('Y-m-d'));
@@ -153,9 +135,15 @@ class ReportController extends Controller
             ? 'strftime("%Y-%m", tanggal_transaksi) as month'
             : 'DATE_FORMAT(tanggal_transaksi, "%Y-%m") as month';
 
-        $chartQuery = TransaksiKas::where('kode_kelas', $kodeKelas)
+        $chartQueryBuilder = TransaksiKas::where('kode_kelas', $kodeKelas)
+            ->whereBetween('tanggal_transaksi', [$startDate, $endDate]);
+
+        if ($categoryId) {
+            $chartQueryBuilder->where('id_kategori', $categoryId);
+        }
+
+        $chartQuery = $chartQueryBuilder
             ->selectRaw($dateSelect . ', jenis_transaksi, SUM(total_nominal) as total')
-            ->whereBetween('tanggal_transaksi', [$startDate, $endDate])
             ->groupBy('month', 'jenis_transaksi')
             ->orderBy('month')
             ->get();
@@ -165,16 +153,21 @@ class ReportController extends Controller
         $expenseData = [];
 
         try {
-            $period = CarbonPeriod::create($startDate, '1 month', $endDate);
-            foreach ($period as $date) {
-                $monthKey = $date->format('Y-m');
-                $months[] = $date->translatedFormat('M Y');
+            $startMonth = Carbon::parse($startDate)->startOfMonth();
+            $endMonth = Carbon::parse($endDate)->startOfMonth();
 
-                $inc = $chartQuery->where('month', $monthKey)->where('jenis_transaksi', 'pemasukan')->first();
-                $incomeData[] = $inc ? (float)$inc->total : 0;
+            if ($startMonth->lte($endMonth)) {
+                $period = CarbonPeriod::create($startMonth, '1 month', $endMonth);
+                foreach ($period as $date) {
+                    $monthKey = $date->format('Y-m');
+                    $months[] = $date->translatedFormat('M Y');
 
-                $exp = $chartQuery->where('month', $monthKey)->where('jenis_transaksi', 'pengeluaran')->first();
-                $expenseData[] = $exp ? (float)$exp->total : 0;
+                    $inc = $chartQuery->where('month', $monthKey)->where('jenis_transaksi', 'pemasukan')->first();
+                    $incomeData[] = $inc ? (float)$inc->total : 0;
+
+                    $exp = $chartQuery->where('month', $monthKey)->where('jenis_transaksi', 'pengeluaran')->first();
+                    $expenseData[] = $exp ? (float)$exp->total : 0;
+                }
             }
         } catch (\Exception $e) {
             $months = [];
@@ -184,77 +177,9 @@ class ReportController extends Controller
 
         $categories = Kategori::orderBy('nama_kategori')->get();
 
-        // ==========================================
-        // TAB 2: STATUS TUNGGAKAN SISWA (PIUTANG KAS)
-        // ==========================================
-        $tahunAjaranList = Kelas::getTahunAjaranOptions();
-        $selectedTahunAjaran = $request->input('tahun_ajaran', $kelas->tahun_ajaran ?? '2025/2026');
-        $periods = $kelas ? $kelas->getPeriods($selectedTahunAjaran) : [];
-        $feeAmount = (float)($kelas->nominal_standar ?? 20000);
-        $totalPeriodsCount = count($periods);
-        $targetPerStudent = $totalPeriodsCount * $feeAmount;
-
-        $studentsArrears = Siswa::where('kode_kelas', $kodeKelas)
-            ->with(['detailTransaksiKas' => function ($q) use ($selectedTahunAjaran) {
-                $q->where(function ($sq) use ($selectedTahunAjaran) {
-                    $sq->where('tahun_ajaran', $selectedTahunAjaran)
-                       ->orWhereNull('tahun_ajaran');
-                });
-            }, 'user'])
-            ->orderBy('nama', 'asc')
-            ->get()
-            ->map(function ($student) use ($periods, $feeAmount, $totalPeriodsCount, $targetPerStudent) {
-                $periodTotals = $student->detailTransaksiKas
-                    ->whereNotNull('periode')
-                    ->groupBy('periode')
-                    ->map(fn($group) => (float)$group->sum('nominal'));
-
-                $paidSlots = 0;
-                $paidPeriodKeys = [];
-                foreach ($periods as $pItem) {
-                    $key = $pItem['key'];
-                    $paid = $periodTotals->get($key, 0.0);
-                    if ($paid <= 0 && $periodTotals->has($pItem['month'])) {
-                        $paid = $periodTotals->get($pItem['month'], 0.0);
-                    }
-                    if ($paid >= $feeAmount) {
-                        $paidSlots++;
-                        $paidPeriodKeys[] = $key;
-                    }
-                }
-
-                $student->total_dibayar = (float)$student->detailTransaksiKas->sum('nominal');
-                $student->target_nominal = $targetPerStudent;
-                $student->total_tunggakan = max(0.0, $targetPerStudent - $student->total_dibayar);
-                $student->slots_paid = $paidSlots;
-                $student->slots_unpaid = max(0, $totalPeriodsCount - $paidSlots);
-                $student->paid_periods = $paidPeriodKeys;
-
-                if ($student->total_tunggakan <= 0 && $targetPerStudent > 0) {
-                    $student->status_bayar = 'Lunas';
-                } elseif ($student->total_dibayar > 0) {
-                    $student->status_bayar = 'Sebagian';
-                } else {
-                    $student->status_bayar = 'Belum Bayar';
-                }
-
-                return $student;
-            });
-
-        $totalSiswa = $studentsArrears->count();
-        $totalTargetKas = $totalSiswa * $targetPerStudent;
-        $totalKasTerkumpul = $studentsArrears->sum('total_dibayar');
-        $totalSisaTunggakan = $studentsArrears->sum('total_tunggakan');
-        $persentaseLunas = $totalTargetKas > 0 ? round(($totalKasTerkumpul / $totalTargetKas) * 100, 1) : 0;
-        $countLunas = $studentsArrears->where('status_bayar', 'Lunas')->count();
-        $countSebagian = $studentsArrears->where('status_bayar', 'Sebagian')->count();
-        $countBelum = $studentsArrears->where('status_bayar', 'Belum Bayar')->count();
-
         return view('wali-kelas.reports.index', compact(
             'kelasList',
             'kelas',
-            'activeTab',
-            'selectedKodeKelas',
             'transactions',
             'saldoAwal',
             'totalIncome',
@@ -269,20 +194,7 @@ class ReportController extends Controller
             'categoryId',
             'type',
             'categories',
-            // Tab 2 data
-            'tahunAjaranList',
-            'selectedTahunAjaran',
-            'periods',
-            'feeAmount',
-            'studentsArrears',
-            'totalSiswa',
-            'totalTargetKas',
-            'totalKasTerkumpul',
-            'totalSisaTunggakan',
-            'persentaseLunas',
-            'countLunas',
-            'countSebagian',
-            'countBelum'
+            'selectedKodeKelas'
         ));
     }
 
@@ -360,7 +272,7 @@ class ReportController extends Controller
             $tx->running_balance = $running;
         }
 
-        $bendahara = $kelas->bendahara()->first();
+        $bendahara = $kelas->bendahara->first();
 
         $pdf = Pdf::loadView('exports.report-pdf', compact(
             'kelas',
@@ -422,92 +334,5 @@ class ReportController extends Controller
             new BendaharaReportExport($kodeKelas, $startDate, $endDate, $categoryId, $type),
             $filename
         );
-    }
-
-    /**
-     * Export student arrears matrix to Excel for Wali Kelas.
-     */
-    public function exportTunggakanExcel(Request $request)
-    {
-        $waliKelas = $this->getWaliKelas();
-        $kelasList = $waliKelas->kelas()->get();
-
-        if ($kelasList->isEmpty()) {
-            abort(404, 'Tidak ada kelas yang ditemukan.');
-        }
-
-        $selectedKodeKelas = $request->input('kode_kelas', $kelasList->first()->kode_kelas);
-        $kelas = $kelasList->where('kode_kelas', $selectedKodeKelas)->first() ?? $kelasList->first();
-        $selectedTahunAjaran = $request->input('tahun_ajaran', $kelas->tahun_ajaran ?? '2025/2026');
-
-        $filename = 'laporan-tunggakan-walikelas-' . $kelas->kode_kelas . '-' . str_replace('/', '-', $selectedTahunAjaran) . '.xlsx';
-
-        return Excel::download(
-            new BendaharaStudentExport($kelas->kode_kelas, $selectedTahunAjaran),
-            $filename
-        );
-    }
-
-    /**
-     * Export student arrears matrix to PDF for Wali Kelas.
-     */
-    public function exportTunggakanPdf(Request $request)
-    {
-        $waliKelas = $this->getWaliKelas();
-        $kelasList = $waliKelas->kelas()->get();
-
-        if ($kelasList->isEmpty()) {
-            abort(404, 'Tidak ada kelas yang ditemukan.');
-        }
-
-        $selectedKodeKelas = $request->input('kode_kelas', $kelasList->first()->kode_kelas);
-        $kelas = $kelasList->where('kode_kelas', $selectedKodeKelas)->first() ?? $kelasList->first();
-        $selectedTahunAjaran = $request->input('tahun_ajaran', $kelas->tahun_ajaran ?? '2025/2026');
-        $feeAmount = (float)($kelas->nominal_standar ?? 20000);
-        $periods = $kelas->getPeriods($selectedTahunAjaran);
-        $totalPeriods = count($periods);
-
-        $students = Siswa::where('kode_kelas', $kelas->kode_kelas)
-            ->with(['detailTransaksiKas' => function ($q) use ($selectedTahunAjaran) {
-                $q->where(function ($sq) use ($selectedTahunAjaran) {
-                    $sq->where('tahun_ajaran', $selectedTahunAjaran)
-                       ->orWhereNull('tahun_ajaran');
-                });
-            }, 'user'])
-            ->orderBy('nama', 'asc')
-            ->get();
-
-        $headings = ['No', 'Nama Siswa', 'NIS', 'No. HP', 'Dibayar (Rp)', 'Tunggakan (Rp)', 'Status'];
-        $rows = [];
-        $no = 1;
-
-        foreach ($students as $student) {
-            $totalDibayar = (float)$student->detailTransaksiKas->sum('nominal');
-            $totalTunggakan = max(0.0, $totalPeriods * $feeAmount - $totalDibayar);
-
-            $status = 'Up to Date';
-            if ($totalTunggakan > 0) {
-                $status = ($totalDibayar > 0) ? 'Pending' : 'Overdue';
-            }
-
-            $rows[] = [
-                $no++,
-                $student->nama,
-                $student->nis ?? '-',
-                $student->no_hp ?? '-',
-                number_format($totalDibayar, 0, ',', '.'),
-                number_format($totalTunggakan, 0, ',', '.'),
-                $status,
-            ];
-        }
-
-        $pdf = Pdf::loadView('exports.pdf', [
-            'title' => 'Rekap Tunggakan Kas Siswa ' . ($kelas->nama_kelas ?? $kelas->kode_kelas) . ' TA ' . $selectedTahunAjaran,
-            'kelas' => $kelas,
-            'headings' => $headings,
-            'rows' => $rows,
-        ]);
-
-        return $pdf->download('laporan-tunggakan-walikelas-' . $kelas->kode_kelas . '-' . str_replace('/', '-', $selectedTahunAjaran) . '.pdf');
     }
 }

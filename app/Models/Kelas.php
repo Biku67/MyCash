@@ -18,7 +18,6 @@ class Kelas extends Model
         'tipe_periode',
         'bulan_mulai',
         'bulan_selesai',
-        'tahun_ajaran',
         'nominal_standar',
         'last_reset_at',
     ];
@@ -27,19 +26,6 @@ class Kelas extends Model
         'nominal_standar' => 'decimal:2',
         'last_reset_at' => 'datetime',
     ];
-
-    /**
-     * Get dynamic list of academic year options
-     */
-    public static function getTahunAjaranOptions(): array
-    {
-        $currentYear = (int)date('Y');
-        $years = [];
-        for ($y = $currentYear - 2; $y <= $currentYear + 2; $y++) {
-            $years[] = $y . '/' . ($y + 1);
-        }
-        return $years;
-    }
 
     public function waliKelas()
     {
@@ -177,82 +163,36 @@ class Kelas extends Model
     }
 
     /**
-     * Get array of active period items based on class settings and academic year
-     * Returns array of ['key' => '2025-07', 'label' => 'Jul 25', 'month' => 'Jul', 'year' => 2025]
+     * Get array of active period strings based on class settings
      */
-    public function getPeriods(?string $tahunAjaran = null): array
+    public function getPeriods(): array
     {
-        $ta = $tahunAjaran ?: ($this->tahun_ajaran ?: '2025/2026');
-        $parts = explode('/', $ta);
-        $startYear = (int)($parts[0] ?? date('Y'));
-        $endYear = (int)($parts[1] ?? ($startYear + 1));
-        $sy2 = substr((string)$startYear, -2);
-        $ey2 = substr((string)$endYear, -2);
-
         if ($this->tipe_periode === 'mingguan') {
             $periods = [];
             for ($i = 1; $i <= 24; $i++) {
-                $pad = str_pad($i, 2, '0', STR_PAD_LEFT);
-                $periods[] = [
-                    'key' => 'M' . $i,
-                    'label' => 'M' . $pad . ' ' . $sy2 . '/' . $ey2,
-                    'month' => 'M' . $i,
-                    'year' => $startYear,
-                ];
+                $periods[] = 'M' . $i;
             }
             return $periods;
         }
 
-        $allMonths = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
-        $monthNums = [
-            'Jan'=>'01','Feb'=>'02','Mar'=>'03','Apr'=>'04','Mei'=>'05','Jun'=>'06',
-            'Jul'=>'07','Agt'=>'08','Sep'=>'09','Okt'=>'10','Nov'=>'11','Des'=>'12'
-        ];
-
-        $start = $this->bulan_mulai ?: 'Jul';
-        $end = $this->bulan_selesai ?: 'Jun';
+        $allMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
+        $start = $this->bulan_mulai ?: 'Jan';
+        $end = $this->bulan_selesai ?: 'Des';
 
         $startIndex = array_search($start, $allMonths);
         $endIndex = array_search($end, $allMonths);
 
-        if ($startIndex === false) $startIndex = 6;
-        if ($endIndex === false) $endIndex = 5;
+        if ($startIndex === false) $startIndex = 0;
+        if ($endIndex === false) $endIndex = 11;
 
-        $monthList = [];
         if ($startIndex <= $endIndex) {
-            $monthList = array_values(array_slice($allMonths, $startIndex, $endIndex - $startIndex + 1));
-        } else {
-            // Cross-year cycle (e.g. Jul s/d Jun)
-            $firstPart = array_slice($allMonths, $startIndex);
-            $secondPart = array_slice($allMonths, 0, $endIndex + 1);
-            $monthList = array_values(array_merge($firstPart, $secondPart));
+            return array_values(array_slice($allMonths, $startIndex, $endIndex - $startIndex + 1));
         }
 
-        $periods = [];
-        foreach ($monthList as $m) {
-            $mIdx = array_search($m, $allMonths);
-            // In academic year: Jul-Des (index 6-11) is startYear; Jan-Jun (index 0-5) is endYear
-            $year = ($mIdx >= 6) ? $startYear : $endYear;
-            $y2 = substr((string)$year, -2);
-            $key = $year . '-' . $monthNums[$m];
-            $label = $m . ' ' . $y2;
+        // Cross-year cycle (e.g. Jul s/d Jun)
+        $firstPart = array_slice($allMonths, $startIndex);
+        $secondPart = array_slice($allMonths, 0, $endIndex + 1);
 
-            $periods[] = [
-                'key' => $key,
-                'label' => $label,
-                'month' => $m,
-                'year' => $year,
-            ];
-        }
-
-        return $periods;
-    }
-
-    /**
-     * Get array of only the period keys (e.g. ['2025-07', '2025-08', ...])
-     */
-    public function getPeriodKeys(?string $tahunAjaran = null): array
-    {
-        return array_column($this->getPeriods($tahunAjaran), 'key');
+        return array_values(array_merge($firstPart, $secondPart));
     }
 }

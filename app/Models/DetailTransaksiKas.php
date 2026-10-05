@@ -15,7 +15,6 @@ class DetailTransaksiKas extends Model
         'id_transaksi_kas',
         'id_siswa',
         'periode',
-        'tahun_ajaran',
         'nominal',
     ];
 

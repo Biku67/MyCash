@@ -115,12 +115,15 @@ class KelasController extends Controller
             'kode_kelas'      => 'required|string|max:30|unique:kelas,kode_kelas',
             'nama_kelas'      => 'required|string|max:100',
             'id_wali_kelas'   => 'nullable|exists:wali_kelas,id',
-            'tipe_periode'    => 'required|in:mingguan,bulanan',
-            'nominal_standar' => 'required|numeric|min:0',
+            'tipe_periode'    => 'nullable|in:mingguan,bulanan',
+            'nominal_standar' => 'nullable|numeric|min:0',
         ], [
             'kode_kelas.unique' => 'Kode kelas ini sudah digunakan. Harap gunakan nama kelas lain atau tentukan kode yang unik.',
             'nominal_standar.min' => 'Nominal standar tidak boleh negatif.',
         ]);
+
+        $validated['tipe_periode'] = $validated['tipe_periode'] ?? 'bulanan';
+        $validated['nominal_standar'] = $validated['nominal_standar'] ?? 20000;
 
         Kelas::create($validated);
 
@@ -148,12 +151,19 @@ class KelasController extends Controller
             'kode_kelas'      => 'required|string|max:30|unique:kelas,kode_kelas,' . $kelas->id,
             'nama_kelas'      => 'required|string|max:100',
             'id_wali_kelas'   => 'nullable|exists:wali_kelas,id',
-            'tipe_periode'    => 'required|in:mingguan,bulanan',
-            'nominal_standar' => 'required|numeric|min:0',
+            'tipe_periode'    => 'nullable|in:mingguan,bulanan',
+            'nominal_standar' => 'nullable|numeric|min:0',
         ], [
             'kode_kelas.unique' => 'Kode kelas ini sudah digunakan oleh kelas lain.',
             'nominal_standar.min' => 'Nominal standar tidak boleh negatif.',
         ]);
+
+        if (!isset($validated['tipe_periode'])) {
+            $validated['tipe_periode'] = $kelas->tipe_periode;
+        }
+        if (!isset($validated['nominal_standar'])) {
+            $validated['nominal_standar'] = $kelas->nominal_standar;
+        }
 
         $oldKode = $kelas->kode_kelas;
         $newKode = $validated['kode_kelas'];

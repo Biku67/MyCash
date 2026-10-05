@@ -16,28 +16,24 @@ class BendaharaStudentExport implements FromCollection, WithHeadings, WithStyles
 {
     protected $kodeKelas;
     protected $kelas;
-    protected $tahunAjaran;
 
-    public function __construct($kodeKelas, ?string $tahunAjaran = null)
+    public function __construct($kodeKelas)
     {
         $this->kodeKelas = $kodeKelas;
         $this->kelas = Kelas::where('kode_kelas', $kodeKelas)->first();
-        $this->tahunAjaran = $tahunAjaran ?: ($this->kelas->tahun_ajaran ?? '2025/2026');
     }
 
     public function collection(): Enumerable
     {
         $feePeriodType = $this->kelas->tipe_periode ?? 'bulanan';
         $feeAmount = (float)($this->kelas->nominal_standar ?? 20000);
-        $totalPeriods = $this->kelas ? count($this->kelas->getPeriods($this->tahunAjaran)) : 12;
-        $ta = $this->tahunAjaran;
+        $totalPeriods = $this->kelas ? count($this->kelas->getPeriods()) : 12;
 
         $students = Siswa::where('kode_kelas', $this->kodeKelas)
-            ->with(['user', 'detailTransaksiKas' => function ($q) use ($ta) {
-                $q->where(function ($sub) use ($ta) {
-                    $sub->where('tahun_ajaran', $ta)
-                        ->orWhereNull('tahun_ajaran');
-                });
+            ->with(['user', 'detailTransaksiKas' => function ($q) {
+                if ($this->kelas && $this->kelas->last_reset_at) {
+                    $q->where('created_at', '>', $this->kelas->last_reset_at);
+                }
             }])
             ->orderBy('nama', 'asc')
             ->get();

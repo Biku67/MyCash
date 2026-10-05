@@ -10,14 +10,12 @@
     <link rel="apple-touch-icon" href="{{ asset('assets/logo-mycash.png') }}">
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
+    <!-- Local Vendor Libraries (No CDN) -->
+    <script src="{{ asset('vendor/jquery/jquery-3.7.1.min.js') }}"></script>
+    <link rel="stylesheet" href="{{ asset('vendor/datatables/jquery.dataTables.min.css') }}">
+    <script src="{{ asset('vendor/datatables/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('vendor/apexcharts/apexcharts.min.js') }}"></script>
+    <script src="{{ asset('vendor/sweetalert2/sweetalert2.all.min.js') }}"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         [x-cloak] { display: none !important; }
@@ -59,74 +57,7 @@
         .input-clean { background: #fff; border: 1px solid #E5E7EB; color: #1A1C1E; border-radius: 8px; transition: all 0.2s; }
         .input-clean:focus { border-color: #5DCAA5; box-shadow: 0 0 0 3px rgba(93,202,165,0.15); outline: none; }
         .input-clean::placeholder { color: #9CA3AF; }
-        /* ─── Flatpickr Custom Styling matching MyCash Design ─── */
-        .flatpickr-calendar {
-            background: #ffffff !important;
-            border-radius: 16px !important;
-            border: 1px solid rgba(27, 79, 114, 0.12) !important;
-            box-shadow: 0 16px 36px -6px rgba(27, 79, 114, 0.2), 0 4px 12px rgba(0, 0, 0, 0.05) !important;
-            font-family: 'Work Sans', sans-serif !important;
-            padding: 8px !important;
-        }
-        .flatpickr-calendar .flatpickr-months {
-            background: #1B4F72 !important;
-            border-radius: 12px 12px 0 0 !important;
-            padding: 8px 0 !important;
-        }
-        .flatpickr-calendar .flatpickr-current-month {
-            color: #ffffff !important;
-            font-weight: 700 !important;
-            font-size: 105% !important;
-        }
-        .flatpickr-calendar .flatpickr-current-month .cur-month {
-            font-weight: 700 !important;
-            color: #ffffff !important;
-        }
-        .flatpickr-calendar .flatpickr-current-month input.cur-year {
-            font-weight: 700 !important;
-            color: #ffffff !important;
-        }
-        .flatpickr-calendar .flatpickr-prev-month svg, 
-        .flatpickr-calendar .flatpickr-next-month svg {
-            fill: #ffffff !important;
-        }
-        .flatpickr-calendar .flatpickr-prev-month:hover svg, 
-        .flatpickr-calendar .flatpickr-next-month:hover svg {
-            fill: #5DCAA5 !important;
-        }
-        .flatpickr-calendar span.flatpickr-weekday {
-            color: #1B4F72 !important;
-            font-weight: 700 !important;
-            font-size: 85% !important;
-        }
-        .flatpickr-calendar .flatpickr-day {
-            border-radius: 10px !important;
-            font-weight: 500 !important;
-            color: #334155 !important;
-            transition: all 0.15s ease !important;
-        }
-        .flatpickr-calendar .flatpickr-day:hover {
-            background: #F1F5F9 !important;
-            color: #1B4F72 !important;
-        }
-        .flatpickr-calendar .flatpickr-day.today {
-            border-color: #5DCAA5 !important;
-            color: #0d9488 !important;
-            font-weight: 700 !important;
-        }
-        .flatpickr-calendar .flatpickr-day.selected {
-            background: #1B4F72 !important;
-            color: #ffffff !important;
-            border-color: #1B4F72 !important;
-            font-weight: 700 !important;
-            box-shadow: 0 4px 10px rgba(27, 79, 114, 0.25) !important;
-        }
-        .flatpickr-calendar .flatpickr-day.flatpickr-disabled, 
-        .flatpickr-calendar .flatpickr-day.flatpickr-disabled:hover {
-            color: #cbd5e1 !important;
-            cursor: not-allowed !important;
-            opacity: 0.35 !important;
-        }
+ 
         .table-clean th { color: #64748B; font-weight: 700; text-transform: uppercase; font-size: 0.6875rem; letter-spacing: 0.05em; padding: 0.625rem 0.875rem; border-bottom: 1px solid #E2E8F0; text-align: left; background-color: #F8FAFC; white-space: nowrap; }
         .table-clean td { padding: 0.625rem 0.875rem; border-bottom: 1px solid #F1F5F9; color: #334155; font-size: 0.8125rem; text-align: left; vertical-align: middle; }
         .table-clean tr:hover td { background-color: #F8FAFC; }
@@ -544,7 +475,7 @@
                     <p class="text-xs text-white/40 truncate">{{ Auth::user()->email }}</p>
                 </div>
             </div>
-            <form method="POST" action="{{ route('logout') }}">
+            <form method="POST" action="{{ route('logout') }}" onsubmit="return swalConfirmLogout(event)">
                 @csrf
                 <button type="submit" class="w-full flex items-center gap-2 px-4 py-2 text-sm text-white/50 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors">
                     <span class="material-symbols-outlined text-lg">logout</span>
@@ -574,7 +505,7 @@
                 <button type="button" onclick="window.dispatchEvent(new CustomEvent('start-tour'))" class="p-1.5 text-gray-400 hover:text-navy hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center" title="Panduan Alur MyCash">
                     <span class="material-symbols-outlined text-xl">help</span>
                 </button>
-                <a href="{{ route('logout.get') }}" class="hidden lg:inline-flex p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Logout">
+                <a href="{{ route('logout.get') }}" onclick="return swalConfirmLogout(event)" class="hidden lg:inline-flex p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Logout">
                     <span class="material-symbols-outlined text-xl">logout</span>
                 </a>
             </div>
@@ -629,7 +560,7 @@
         </a>
 
         <!-- 4. Logout -->
-        <form method="POST" action="{{ route('logout') }}" class="m-0 p-0">
+        <form method="POST" action="{{ route('logout') }}" onsubmit="return swalConfirmLogout(event)" class="m-0 p-0">
             @csrf
             <button type="submit"
                     class="w-12 h-12 rounded-full bg-white border border-gray-100/80 flex items-center justify-center active:scale-85 hover:scale-105 transition-all focus:outline-none"
@@ -751,43 +682,115 @@
             cancelButtonText: 'Batal',
             reverseButtons: true
         }).then((result) => {
-            if (result.isConfirmed) event.target.submit();
+            if (result.isConfirmed) {
+                const element = event.currentTarget || event.target;
+                const form = element ? element.closest('form') : null;
+                if (form) HTMLFormElement.prototype.submit.call(form);
+            }
         });
         return false;
     }
-    </script>
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        if (typeof flatpickr !== 'undefined') {
-            flatpickr.localize(flatpickr.l10ns.id);
 
-            // Form Transaksi: Format lengkap dengan nama hari (contoh: Senin, 21 September 2026)
-            document.querySelectorAll('.datepicker-tx').forEach(function(el) {
-                flatpickr(el, {
-                    locale: 'id',
-                    altInput: true,
-                    altFormat: 'l, j F Y',
-                    dateFormat: 'Y-m-d',
-                    maxDate: el.getAttribute('max') || 'today',
-                    disableMobile: true,
-                    altInputClass: el.className.replace('datepicker-tx', '').trim() + ' cursor-pointer'
-                });
-            });
+    /**
+     * SweetAlert2 confirm for logout action.
+     */
+    function swalConfirmLogout(event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        const element = event ? (event.currentTarget || event.target) : null;
+        const form = element ? element.closest('form') : null;
+        const anchor = element ? element.closest('a') : null;
 
-            // Laporan & Filter: Format tanggal bulan teks (contoh: 21 September 2026)
-            document.querySelectorAll('.datepicker-report').forEach(function(el) {
-                flatpickr(el, {
-                    locale: 'id',
-                    altInput: true,
-                    altFormat: 'j F Y',
-                    dateFormat: 'Y-m-d',
-                    maxDate: el.getAttribute('max') || 'today',
-                    disableMobile: true,
-                    altInputClass: el.className.replace('datepicker-report', '').trim() + ' cursor-pointer'
-                });
+        Swal.fire({
+            title: 'Konfirmasi Keluar',
+            text: 'Apakah Anda yakin ingin keluar dari akun MyCash?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#DC2626',
+            cancelButtonColor: '#6B7280',
+            confirmButtonText: 'Ya, Keluar',
+            cancelButtonText: 'Batal',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                if (form) {
+                    HTMLFormElement.prototype.submit.call(form);
+                } else if (anchor && anchor.href && !anchor.href.startsWith('javascript:')) {
+                    window.location.href = anchor.href;
+                } else {
+                    window.location.href = "{{ route('logout.get') }}";
+                }
+            }
+        });
+        return false;
+    }
+
+    // Global Logout Interceptor
+    let isLoggingOut = false;
+    document.addEventListener('click', function(e) {
+        if (isLoggingOut) return;
+        const trigger = e.target.closest('a[href*="logout"], form[action*="logout"] button, button[data-logout], .btn-logout');
+        if (!trigger) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        const form = trigger.closest('form');
+        const anchor = trigger.closest('a');
+
+        Swal.fire({
+            title: 'Konfirmasi Keluar',
+            text: 'Apakah Anda yakin ingin keluar dari akun MyCash?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#DC2626',
+            cancelButtonColor: '#6B7280',
+            confirmButtonText: 'Ya, Keluar',
+            cancelButtonText: 'Batal',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                isLoggingOut = true;
+                if (form) {
+                    HTMLFormElement.prototype.submit.call(form);
+                } else if (anchor && anchor.href && !anchor.href.startsWith('javascript:')) {
+                    window.location.href = anchor.href;
+                } else {
+                    window.location.href = "{{ route('logout.get') }}";
+                }
+            }
+        });
+    }, true);
+
+    document.addEventListener('submit', function(e) {
+        if (isLoggingOut) return;
+        const form = e.target;
+        if (form && form.action && form.action.includes('logout')) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            Swal.fire({
+                title: 'Konfirmasi Keluar',
+                text: 'Apakah Anda yakin ingin keluar dari akun MyCash?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#DC2626',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Ya, Keluar',
+                cancelButtonText: 'Batal',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    isLoggingOut = true;
+                    HTMLFormElement.prototype.submit.call(form);
+                }
             });
         }
-    });
+    }, true);
     </script>
     <x-onboarding-tour />
     @stack('scripts')

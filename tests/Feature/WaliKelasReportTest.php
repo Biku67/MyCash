@@ -30,7 +30,6 @@ class WaliKelasReportTest extends TestCase
         $response = $this->actingAs($waliUser)->get(route('wali-kelas.report.index'));
         $response->assertStatus(200);
         $response->assertSee('Laporan Keuangan Kas');
-        $response->assertSee('Saldo Awal');
         $response->assertSee('Total Pemasukan');
         $response->assertSee('Total Pengeluaran');
         $response->assertSee('Saldo Akhir');
@@ -126,49 +125,21 @@ class WaliKelasReportTest extends TestCase
         $response->assertSee('Laporan Kas');
     }
 
-    public function test_wali_kelas_can_view_tunggakan_tab_and_arrears_summary(): void
+    public function test_chart_renders_apexcharts_and_handles_month_stepping(): void
     {
         $waliUser = User::where('role', 'wali_kelas')->first();
-        $this->assertNotNull($waliUser);
 
-        $response = $this->actingAs($waliUser)->get(route('wali-kelas.report.index', ['tab' => 'tunggakan']));
-        $response->assertStatus(200);
-        $response->assertSee('Tab 2: Status Tunggakan Siswa');
-        $response->assertSee('Total Target Tagihan Kas');
-        $response->assertSee('Kas Terkumpul (Lunas)');
-        $response->assertSee('Total Sisa Tunggakan');
-        $response->assertSee('Kepatuhan Bayar Siswa');
-        $response->assertSee('Daftar Status Tunggakan Per Siswa');
-        $response->assertSee(route('wali-kelas.report.exportTunggakanExcel'));
-        $response->assertSee(route('wali-kelas.report.exportTunggakanPdf'));
-    }
-
-    public function test_wali_kelas_can_export_tunggakan_excel(): void
-    {
-        $waliUser = User::where('role', 'wali_kelas')->first();
-        $this->assertNotNull($waliUser);
-
-        $response = $this->actingAs($waliUser)->get(route('wali-kelas.report.exportTunggakanExcel', [
-            'tahun_ajaran' => '2025/2026',
+        $response = $this->actingAs($waliUser)->get(route('wali-kelas.report.index', [
+            'start_date' => '2026-01-31',
+            'end_date'   => '2026-03-15',
         ]));
 
         $response->assertStatus(200);
-        $this->assertTrue(
-            str_contains($response->headers->get('content-type'), 'spreadsheet') ||
-            str_contains($response->headers->get('content-disposition'), '.xlsx')
-        );
-    }
-
-    public function test_wali_kelas_can_export_tunggakan_pdf(): void
-    {
-        $waliUser = User::where('role', 'wali_kelas')->first();
-        $this->assertNotNull($waliUser);
-
-        $response = $this->actingAs($waliUser)->get(route('wali-kelas.report.exportTunggakanPdf', [
-            'tahun_ajaran' => '2025/2026',
-        ]));
-
-        $response->assertStatus(200);
-        $this->assertEquals('application/pdf', $response->headers->get('content-type'));
+        $response->assertSee('id="cashFlowChart"', false);
+        $response->assertSee('new ApexCharts', false);
+        $response->assertSee('setPreset');
+        $response->assertViewHas('months', function ($months) {
+            return count($months) === 3; // Jan, Feb, Mar 2026 without skipping February
+        });
     }
 }

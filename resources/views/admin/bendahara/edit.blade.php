@@ -52,7 +52,7 @@
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1.5">Penugasan Kelas <span class="text-rose-500">*</span></label>
-                        <select name="kode_kelas" required class="input-clean w-full px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-800 bg-white border border-slate-200 rounded-xl">
+                        <select name="kode_kelas" required class="ui search selection dropdown input-clean w-full">
                             <option value="">-- Pilih Kelas --</option>
                             @foreach($kelasList as $kelas)
                                 <option value="{{ $kelas->kode_kelas }}" {{ old('kode_kelas', $bendahara->kode_kelas) === $kelas->kode_kelas ? 'selected' : '' }}>

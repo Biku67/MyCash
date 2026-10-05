@@ -35,22 +35,16 @@ class ReportController extends Controller
     public function index(Request $request)
     {
         $request->validate([
-            'tab'        => 'nullable|in:buku_kas,tunggakan',
             'start_date' => 'nullable|date_format:Y-m-d',
             'end_date'   => 'nullable|date_format:Y-m-d|after_or_equal:start_date',
             'category_id'=> 'nullable|exists:kategori,id',
             'type'       => 'nullable|in:all,pemasukan,pengeluaran',
-            'tahun_ajaran' => 'nullable|string|max:15',
         ]);
 
         $bendahara = $this->getBendahara();
         $kelas = $bendahara->kelas;
         $kodeKelas = $bendahara->kode_kelas;
-        $activeTab = $request->input('tab', 'buku_kas');
 
-        // ==========================================
-        // TAB 1: BUKU KAS UMUM (ARUS KAS RIIL)
-        // ==========================================
         $startDate = $request->input('start_date', now()->startOfYear()->format('Y-m-d'));
         $endDate = $request->input('end_date', now()->format('Y-m-d'));
         $categoryId = $request->input('category_id');
@@ -103,14 +97,21 @@ class ReportController extends Controller
         $transactions = $transactionsWithBalance->reverse()->values();
 
         // Chart Data (Group by Month for the selected range)
+        // Chart Data (Group by Month for the selected range)
         $driver = DB::connection()->getDriverName();
         $dateSelect = $driver === 'sqlite'
             ? 'strftime("%Y-%m", tanggal_transaksi) as month'
             : 'DATE_FORMAT(tanggal_transaksi, "%Y-%m") as month';
 
-        $chartQuery = TransaksiKas::where('kode_kelas', $kodeKelas)
+        $chartQueryBuilder = TransaksiKas::where('kode_kelas', $kodeKelas)
+            ->whereBetween('tanggal_transaksi', [$startDate, $endDate]);
+
+        if ($categoryId) {
+            $chartQueryBuilder->where('id_kategori', $categoryId);
+        }
+
+        $chartQuery = $chartQueryBuilder
             ->selectRaw($dateSelect . ', jenis_transaksi, SUM(total_nominal) as total')
-            ->whereBetween('tanggal_transaksi', [$startDate, $endDate])
             ->groupBy('month', 'jenis_transaksi')
             ->orderBy('month')
             ->get();
@@ -120,16 +121,21 @@ class ReportController extends Controller
         $expenseData = [];
 
         try {
-            $period = CarbonPeriod::create($startDate, '1 month', $endDate);
-            foreach ($period as $date) {
-                $monthKey = $date->format('Y-m');
-                $months[] = $date->translatedFormat('M Y');
+            $startMonth = Carbon::parse($startDate)->startOfMonth();
+            $endMonth = Carbon::parse($endDate)->startOfMonth();
 
-                $inc = $chartQuery->where('month', $monthKey)->where('jenis_transaksi', 'pemasukan')->first();
-                $incomeData[] = $inc ? (float)$inc->total : 0;
+            if ($startMonth->lte($endMonth)) {
+                $period = CarbonPeriod::create($startMonth, '1 month', $endMonth);
+                foreach ($period as $date) {
+                    $monthKey = $date->format('Y-m');
+                    $months[] = $date->translatedFormat('M Y');
 
-                $exp = $chartQuery->where('month', $monthKey)->where('jenis_transaksi', 'pengeluaran')->first();
-                $expenseData[] = $exp ? (float)$exp->total : 0;
+                    $inc = $chartQuery->where('month', $monthKey)->where('jenis_transaksi', 'pemasukan')->first();
+                    $incomeData[] = $inc ? (float)$inc->total : 0;
+
+                    $exp = $chartQuery->where('month', $monthKey)->where('jenis_transaksi', 'pengeluaran')->first();
+                    $expenseData[] = $exp ? (float)$exp->total : 0;
+                }
             }
         } catch (\Exception $e) {
             $months = [];
@@ -139,76 +145,8 @@ class ReportController extends Controller
 
         $categories = Kategori::orderBy('nama_kategori')->get();
 
-        // ==========================================
-        // TAB 2: STATUS TUNGGAKAN SISWA (PIUTANG KAS)
-        // ==========================================
-        $tahunAjaranList = Kelas::getTahunAjaranOptions();
-        $selectedTahunAjaran = $request->input('tahun_ajaran', $kelas->tahun_ajaran ?? '2025/2026');
-        $periods = $kelas ? $kelas->getPeriods($selectedTahunAjaran) : [];
-        $feeAmount = (float)($kelas->nominal_standar ?? 20000);
-        $totalPeriodsCount = count($periods);
-        $targetPerStudent = $totalPeriodsCount * $feeAmount;
-
-        $studentsArrears = Siswa::where('kode_kelas', $kodeKelas)
-            ->with(['detailTransaksiKas' => function ($q) use ($selectedTahunAjaran) {
-                $q->where(function ($sq) use ($selectedTahunAjaran) {
-                    $sq->where('tahun_ajaran', $selectedTahunAjaran)
-                       ->orWhereNull('tahun_ajaran');
-                });
-            }, 'user'])
-            ->orderBy('nama', 'asc')
-            ->get()
-            ->map(function ($student) use ($periods, $feeAmount, $totalPeriodsCount, $targetPerStudent) {
-                $periodTotals = $student->detailTransaksiKas
-                    ->whereNotNull('periode')
-                    ->groupBy('periode')
-                    ->map(fn($group) => (float)$group->sum('nominal'));
-
-                $paidSlots = 0;
-                $paidPeriodKeys = [];
-                foreach ($periods as $pItem) {
-                    $key = $pItem['key'];
-                    $paid = $periodTotals->get($key, 0.0);
-                    if ($paid <= 0 && $periodTotals->has($pItem['month'])) {
-                        $paid = $periodTotals->get($pItem['month'], 0.0);
-                    }
-                    if ($paid >= $feeAmount) {
-                        $paidSlots++;
-                        $paidPeriodKeys[] = $key;
-                    }
-                }
-
-                $student->total_dibayar = (float)$student->detailTransaksiKas->sum('nominal');
-                $student->target_nominal = $targetPerStudent;
-                $student->total_tunggakan = max(0.0, $targetPerStudent - $student->total_dibayar);
-                $student->slots_paid = $paidSlots;
-                $student->slots_unpaid = max(0, $totalPeriodsCount - $paidSlots);
-                $student->paid_periods = $paidPeriodKeys;
-
-                if ($student->total_tunggakan <= 0 && $targetPerStudent > 0) {
-                    $student->status_bayar = 'Lunas';
-                } elseif ($student->total_dibayar > 0) {
-                    $student->status_bayar = 'Sebagian';
-                } else {
-                    $student->status_bayar = 'Belum Bayar';
-                }
-
-                return $student;
-            });
-
-        $totalSiswa = $studentsArrears->count();
-        $totalTargetKas = $totalSiswa * $targetPerStudent;
-        $totalKasTerkumpul = $studentsArrears->sum('total_dibayar');
-        $totalSisaTunggakan = $studentsArrears->sum('total_tunggakan');
-        $persentaseLunas = $totalTargetKas > 0 ? round(($totalKasTerkumpul / $totalTargetKas) * 100, 1) : 0;
-        $countLunas = $studentsArrears->where('status_bayar', 'Lunas')->count();
-        $countSebagian = $studentsArrears->where('status_bayar', 'Sebagian')->count();
-        $countBelum = $studentsArrears->where('status_bayar', 'Belum Bayar')->count();
-
         return view('bendahara.reports.index', compact(
             'kelas',
-            'activeTab',
-            // Tab 1 data
             'transactions',
             'saldoAwal',
             'totalIncome',
@@ -222,21 +160,7 @@ class ReportController extends Controller
             'endDate',
             'categoryId',
             'type',
-            'categories',
-            // Tab 2 data
-            'tahunAjaranList',
-            'selectedTahunAjaran',
-            'periods',
-            'feeAmount',
-            'studentsArrears',
-            'totalSiswa',
-            'totalTargetKas',
-            'totalKasTerkumpul',
-            'totalSisaTunggakan',
-            'persentaseLunas',
-            'countLunas',
-            'countSebagian',
-            'countBelum'
+            'categories'
         ));
     }
 
