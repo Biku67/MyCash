@@ -153,6 +153,10 @@ class TransactionController extends Controller
         $bendahara = auth()->user()->bendahara;
         $students = Siswa::where('kode_kelas', $bendahara->kode_kelas)->orderBy('nama', 'asc')->get();
         
+        $totalIn = (float)TransaksiKas::where('kode_kelas', $bendahara->kode_kelas)->where('jenis_transaksi', 'pemasukan')->sum('total_nominal');
+        $totalOut = (float)TransaksiKas::where('kode_kelas', $bendahara->kode_kelas)->where('jenis_transaksi', 'pengeluaran')->sum('total_nominal');
+        $currentSaldo = max(0, $totalIn - $totalOut);
+
         $incomeCategories = Kategori::where('tipe', 'pemasukan')->pluck('nama_kategori')->values();
         if ($incomeCategories->isEmpty()) {
             $incomeCategories = collect(['Uang Kas', 'Sumbangan / Donasi', 'Lainnya (Pemasukan)']);
@@ -163,7 +167,7 @@ class TransactionController extends Controller
             $expenseCategories = collect(['Pembelian ATK', 'Kegiatan Kelas', 'Operasional Kelas', 'Lainnya (Pengeluaran)']);
         }
 
-        return view('bendahara.transactions.create', compact('students', 'incomeCategories', 'expenseCategories'));
+        return view('bendahara.transactions.create', compact('students', 'incomeCategories', 'expenseCategories', 'currentSaldo'));
     }
 
     public function store(Request $request)
@@ -179,7 +183,22 @@ class TransactionController extends Controller
             'transaction_date.before_or_equal' => 'Tanggal transaksi tidak boleh melebihi hari ini.',
         ]);
 
-        DB::transaction(function () use ($validated, $request) {
+        $bendahara = auth()->user()->bendahara;
+
+        // Validasi: Pengeluaran tidak boleh melebihi sisa saldo kas (saldo tidak boleh minus)
+        if ($validated['type'] === 'expense') {
+            $totalIn = (float)TransaksiKas::where('kode_kelas', $bendahara->kode_kelas)->where('jenis_transaksi', 'pemasukan')->sum('total_nominal');
+            $totalOut = (float)TransaksiKas::where('kode_kelas', $bendahara->kode_kelas)->where('jenis_transaksi', 'pengeluaran')->sum('total_nominal');
+            $currentSaldo = $totalIn - $totalOut;
+
+            if ((float)$validated['amount'] > $currentSaldo) {
+                return back()->withInput()->withErrors([
+                    'amount' => 'Nominal pengeluaran (Rp ' . number_format($validated['amount'], 0, ',', '.') . ') melebihi sisa saldo kas kelas saat ini (Rp ' . number_format(max(0, $currentSaldo), 0, ',', '.') . '). Saldo kas tidak boleh minus.',
+                ]);
+            }
+        }
+
+        DB::transaction(function () use ($validated, $request, $bendahara) {
             $bendahara = auth()->user()->bendahara;
             $kelas = $bendahara->kelas;
             $studentId = $validated['student_id'] ?? null;
@@ -253,7 +272,11 @@ class TransactionController extends Controller
         // Get student id if this was a student fee payment
         $currentStudentId = $transaction->detailTransaksi->first()?->id_siswa;
 
-        return view('bendahara.transactions.edit', compact('transaction', 'students', 'currentStudentId', 'incomeCategories', 'expenseCategories'));
+        $totalIn = (float)TransaksiKas::where('kode_kelas', $bendahara->kode_kelas)->where('jenis_transaksi', 'pemasukan')->sum('total_nominal');
+        $totalOut = (float)TransaksiKas::where('kode_kelas', $bendahara->kode_kelas)->where('jenis_transaksi', 'pengeluaran')->sum('total_nominal');
+        $currentSaldo = max(0, $totalIn - $totalOut);
+
+        return view('bendahara.transactions.edit', compact('transaction', 'students', 'currentStudentId', 'incomeCategories', 'expenseCategories', 'currentSaldo'));
     }
 
     public function update(Request $request, $id)
@@ -275,6 +298,26 @@ class TransactionController extends Controller
             'transaction_date.before_or_equal' => 'Tanggal transaksi tidak boleh melebihi hari ini.',
             'reason.required' => 'Alasan perubahan transaksi wajib diisi untuk riwayat audit log.',
         ]);
+
+        // Validasi: Perubahan transaksi tidak boleh menyebabkan saldo kas kelas menjadi negatif
+        $otherIn = (float)TransaksiKas::where('kode_kelas', $bendahara->kode_kelas)
+            ->where('id', '!=', $transaction->id)
+            ->where('jenis_transaksi', 'pemasukan')
+            ->sum('total_nominal');
+        $otherOut = (float)TransaksiKas::where('kode_kelas', $bendahara->kode_kelas)
+            ->where('id', '!=', $transaction->id)
+            ->where('jenis_transaksi', 'pengeluaran')
+            ->sum('total_nominal');
+
+        $projectedIn = $otherIn + ($validated['type'] === 'income' ? (float)$validated['amount'] : 0);
+        $projectedOut = $otherOut + ($validated['type'] === 'expense' ? (float)$validated['amount'] : 0);
+        $projectedSaldo = $projectedIn - $projectedOut;
+
+        if ($projectedSaldo < 0) {
+            return back()->withInput()->withErrors([
+                'amount' => 'Perubahan transaksi ini akan menyebabkan saldo kas kelas menjadi minus (defisit Rp ' . number_format(abs($projectedSaldo), 0, ',', '.') . '). Saldo kas tidak boleh minus.',
+            ]);
+        }
 
         DB::transaction(function () use ($validated, $transaction, $bendahara) {
             $kelas = $bendahara->kelas;
@@ -352,6 +395,21 @@ class TransactionController extends Controller
         ], [
             'reason.required' => 'Alasan penghapusan transaksi wajib diisi untuk riwayat audit log.',
         ]);
+
+        // Validasi: Penghapusan pemasukan tidak boleh membuat sisa saldo kas kelas menjadi negatif
+        if ($transaction->jenis_transaksi === 'pemasukan') {
+            $totalIn = (float)TransaksiKas::where('kode_kelas', $bendahara->kode_kelas)->where('jenis_transaksi', 'pemasukan')->sum('total_nominal');
+            $totalOut = (float)TransaksiKas::where('kode_kelas', $bendahara->kode_kelas)->where('jenis_transaksi', 'pengeluaran')->sum('total_nominal');
+            $projectedSaldo = ($totalIn - (float)$transaction->total_nominal) - $totalOut;
+
+            if ($projectedSaldo < 0) {
+                $msg = 'Transaksi pemasukan ini tidak dapat dihapus karena saldo saat ini sudah terpakai untuk pengeluaran. Penghapusan akan menyebabkan saldo kas menjadi minus (defisit Rp ' . number_format(abs($projectedSaldo), 0, ',', '.') . ').';
+                if ($request->ajax()) {
+                    return response()->json(['success' => false, 'message' => $msg], 422);
+                }
+                return back()->with('error', $msg);
+            }
+        }
 
         $reason = $validated['reason'];
 

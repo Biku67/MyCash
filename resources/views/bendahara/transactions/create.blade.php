@@ -68,7 +68,12 @@
                 </div>
 
                 <div id="tour-bendahara-tx-amount">
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Jumlah Nominal (Rp)</label>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-semibold text-slate-600">Jumlah Nominal (Rp)</label>
+                        <div x-show="type === 'expense'" x-cloak class="text-[11px] font-semibold text-slate-500">
+                            Sisa Saldo Kas: <span class="text-emerald-600 font-bold">Rp {{ number_format($currentSaldo ?? 0, 0, ',', '.') }}</span>
+                        </div>
+                    </div>
                     <input type="number" name="amount" value="{{ old('amount') }}" required min="0" class="input-clean w-full px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-800 bg-white border border-slate-200 rounded-xl" placeholder="Contoh: 20000">
                     @error('amount')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
                 </div>

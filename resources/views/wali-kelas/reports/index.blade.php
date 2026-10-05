@@ -23,14 +23,14 @@
                 <a id="btnExportExcel" 
                    href="{{ route('wali-kelas.report.exportExcel', array_filter(['kode_kelas' => $selectedKodeKelas, 'start_date' => $startDate, 'end_date' => $endDate, 'category_id' => $categoryId, 'type' => $type])) }}" 
                    title="Unduh Buku Kas Umum ke Excel (.xlsx)"
-                   class="py-2.5 px-4 text-xs sm:text-sm inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold transition-all shadow-sm">
+                   class="py-2.5 px-3 text-xs inline-flex items-center gap-1.5 bg-white text-emerald-700 border border-slate-200 hover:bg-emerald-50 rounded-xl font-semibold transition-all">
                     <span class="material-symbols-outlined text-base">table</span> Ekspor Excel
                 </a>
                 <a id="btnExportPdf" 
                    href="{{ route('wali-kelas.report.exportPdf', array_filter(['kode_kelas' => $selectedKodeKelas, 'start_date' => $startDate, 'end_date' => $endDate, 'category_id' => $categoryId, 'type' => $type])) }}" 
                    target="_blank"
                    title="Cetak Buku Kas PDF (Buka di Tab Baru)"
-                   class="btn-navy py-2.5 px-4 text-xs sm:text-sm inline-flex items-center justify-center gap-2 rounded-xl font-semibold shadow-sm">
+                   class="py-2.5 px-3 text-xs inline-flex items-center gap-1.5 bg-white text-rose-700 border border-slate-200 hover:bg-rose-50 rounded-xl font-semibold transition-all">
                     <span class="material-symbols-outlined text-base">picture_as_pdf</span> Cetak PDF
                 </a>
             </div>

@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="{{ asset('vendor/datatables/jquery.dataTables.min.css') }}">
     <script src="{{ asset('vendor/datatables/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('vendor/apexcharts/apexcharts.min.js') }}"></script>
+    <link rel="stylesheet" href="{{ asset('vendor/sweetalert2/sweetalert2.min.css') }}">
     <script src="{{ asset('vendor/sweetalert2/sweetalert2.all.min.js') }}"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
@@ -357,6 +358,7 @@
             timer: 4000,
             timerProgressBar: true,
             showCloseButton: true,
+            backdrop: false,
             didOpen: (toast) => {
                 toast.onmouseenter = Swal.stopTimer;
                 toast.onmouseleave = Swal.resumeTimer;

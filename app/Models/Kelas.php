@@ -195,4 +195,14 @@ class Kelas extends Model
 
         return array_values(array_merge($firstPart, $secondPart));
     }
+
+    /**
+     * Get real-time class cash balance ensuring non-negative value
+     */
+    public function getSaldoKasAttribute(): float
+    {
+        $in = (float)$this->transaksiKas()->where('jenis_transaksi', 'pemasukan')->sum('total_nominal');
+        $out = (float)$this->transaksiKas()->where('jenis_transaksi', 'pengeluaran')->sum('total_nominal');
+        return max(0.0, $in - $out);
+    }
 }

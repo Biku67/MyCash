@@ -27,7 +27,7 @@ class DashboardController extends Controller
 
         $totalMasukSekolah = (float)TransaksiKas::where('jenis_transaksi', 'pemasukan')->sum('total_nominal');
         $totalKeluarSekolah = (float)TransaksiKas::where('jenis_transaksi', 'pengeluaran')->sum('total_nominal');
-        $totalSaldoSekolah = $totalMasukSekolah - $totalKeluarSekolah;
+        $totalSaldoSekolah = max(0, $totalMasukSekolah - $totalKeluarSekolah);
 
         // Rincian Kesehatan Kas Seluruh Kelas
         $rawKelas = Kelas::with(['waliKelas', 'bendahara', 'siswa'])->orderBy('nama_kelas')->get();
@@ -36,7 +36,7 @@ class DashboardController extends Controller
             $keluar = (float)TransaksiKas::where('kode_kelas', $k->kode_kelas)->where('jenis_transaksi', 'pengeluaran')->sum('total_nominal');
             $k->total_masuk = $masuk;
             $k->total_keluar = $keluar;
-            $k->saldo_kas = $masuk - $keluar;
+            $k->saldo_kas = max(0, $masuk - $keluar);
             $k->total_siswa = $k->siswa->count();
             return $k;
         });

@@ -33,7 +33,7 @@ class DashboardController extends Controller
                 ->where('jenis_transaksi', 'pengeluaran')
                 ->sum('total_nominal');
 
-            $totalKasTerkumpul = $totalMasuk - $totalKeluar;
+            $totalKasTerkumpul = max(0, $totalMasuk - $totalKeluar);
         }
 
         // Hitung statistik per kelas
@@ -42,7 +42,7 @@ class DashboardController extends Controller
             $out = (float)TransaksiKas::where('kode_kelas', $k->kode_kelas)->where('jenis_transaksi', 'pengeluaran')->sum('total_nominal');
             $k->total_masuk = $in;
             $k->total_keluar = $out;
-            $k->saldo_kas = $in - $out;
+            $k->saldo_kas = max(0, $in - $out);
             $k->total_siswa = $k->siswa->count();
             return $k;
         });

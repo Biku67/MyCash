@@ -45,7 +45,7 @@ class DashboardController extends Controller
                 ->where('jenis_transaksi', 'pengeluaran')
                 ->sum('total_nominal');
 
-            $saldoKas = $totalMasuk - $totalKeluar;
+            $saldoKas = max(0, $totalMasuk - $totalKeluar);
 
             // Bulan Ini
             $startOfMonth = now()->startOfMonth()->toDateString();
