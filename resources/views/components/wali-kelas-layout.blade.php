@@ -359,6 +359,12 @@
             timerProgressBar: true,
             showCloseButton: true,
             backdrop: false,
+            showClass: {
+                popup: 'swal2-toast-animate-in'
+            },
+            hideClass: {
+                popup: 'swal2-toast-animate-out'
+            },
             didOpen: (toast) => {
                 toast.onmouseenter = Swal.stopTimer;
                 toast.onmouseleave = Swal.resumeTimer;
